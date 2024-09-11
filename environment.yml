@@ -1,0 +1,19 @@
+# For developers only:
+#  Remove the cmorMDfixer environment:
+#   conda deactivate
+#   rm -rf ${mambapath}/envs/cmorMDfixer
+#  Create the cmorMDfixer environment:
+#    activatemamba                               # alias activatemamba='source ${mambapath}/etc/profile.d/conda.sh'
+#    mamba update -y --name base mamba           # For updating mamba itself
+#    mamba env create -f environment.yml         # Create the cmorMDfixer environment
+#  Basic tests:
+#   which python                                 # ${mambapath}/envs/cmorMDfixer/bin/python
+#   python --version                             # Python 3.12.5
+#   ./cmorMDfixer.py -h
+
+name: cmorMDfixer
+channels:
+- conda-forge
+- defaults
+dependencies:
+- netcdf4
