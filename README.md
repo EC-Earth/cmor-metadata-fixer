@@ -1,15 +1,11 @@
--# cmor-metadata-fixer
--CMOR metadata fixer for cmorised output of any model
+# cmor-metadata-fixer
+CMOR metadata fixer for cmorised output of any CMIP model
 
-Python code to fix CMOR metadata of cmorised output of any CMIP model.
-
-Guidelines how to use the `cmor-meatdat-fixer` is described below.
-
+Guidelines how to use the `cmorMDfixer` can be found below.
 
 ## Required python packages:
 
 * netCDF4
-* numpy
 
 ## 1. Installation
 
@@ -68,7 +64,6 @@ conda deactivate                          # Deactivating the active (here cmorMD
 
 ##### Running the cmorMDfixer inside the conda environment:
 ```shell
-
  # Activate the cmorMDfixer environment:
  activatecmorMDfixer                      # The alias as defined above
 
@@ -82,10 +77,11 @@ conda deactivate                          # Deactivating the active (here cmorMD
  # Clean and revert the changes made above:
  ./test-cmorMDfixer.sh clean
 
- conda deactivate                         # Deactivating the active (here cmorMDfixer) environment
+ # Deactivating the active (here cmorMDfixer) environment
+ conda deactivate
 ```
 
-### Apply cmorMDfixer at the ESGF node to data which has been published at the ESGF node
+### Apply cmorMDfixer on your data (possibly on published data at the ESGF node)
 
 
 ##### Option 1: Running the cmorMDfixer:
@@ -96,10 +92,12 @@ conda deactivate                          # Deactivating the active (here cmorMD
  activatecmorMDfixer                      # The mamba-activate alias (as defined above)
  cd ${HOME}/cmorize/cmor-metadata-fixer   # Navigate to the cmor-metadata-fixer root directory
 
- # :
- ./cmorMDfixer.py --verbose --forceid --olist --npp 1 CMIP6/
+ # Replace with the cmorMDfixer.py all cmor attribute values listed in the metadata-corrections.json file
+ # on all files within the CMIP6 directory:
+ ./cmorMDfixer.py --verbose --forceid --olist --npp 1 metadata-corrections.json CMIP6/
 
- conda deactivate                         # Deactivating the active (here cmorMDfixer) environment
+ # Deactivating the active (here cmorMDfixer) environment
+ conda deactivate
 ```
 
 ##### Option 2: Alternatively, use the `cmorMDfixer-safe-mode-wrapper.sh` script:
