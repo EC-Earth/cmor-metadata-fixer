@@ -107,7 +107,7 @@ The `cmorMDfixer-safe-mode-wrapper.sh` script will only apply changes if at leas
  # Activate the cmorMDfixer conda environment:
  activatecmorMDfixer                      # The mamba-activate alias (as defined above)
 
- ./cmorMDfixer-safe-mode-wrapper.sh 1 CMIP6/
+ ./cmorMDfixer-safe-mode-wrapper.sh 1 metadata-corrections.json CMIP6/
 
  conda deactivate
 ```
@@ -117,19 +117,6 @@ The `cmorMDfixer-safe-mode-wrapper.sh` script will only apply changes if at leas
 The `submit-cmorMDfixer.sh` script is an `sbatch` template for a submit script which needs adjustments of all the paths and possibly adjustent of the cmorMDfixer arguments depending on the preferences of the user. The script can be called (it activates the cmor environment itself at the compute node) by:
 ```shell
 sbatch submit-cmorMDfixer.sh
-```
-
-### Apply cmorMDfixer to data which has not been published before
-
-```shell
-
- # Activate the cmorMDfixer conda environment:
- activatecmorMDfixer                      # The mamba-activate alias (as defined above)
-
- # An example with the cmorMDfixer:
- ./cmorMDfixer.py --verbose --keepid --olist --npp 1 CMIP6/
-
- conda deactivate
 ```
 
 ## 3. Adjust the version directory name
@@ -144,6 +131,6 @@ In order to see whether there is more than one version in your data:
 ```shell
 ./versions.sh -l CMIP6/
 ```
-If so (this happens when during running the script the date changed because you crossed midnight), you need to set one version (you can choose what you want, but it should be a different and later date than the one which was previously published). One can set the date for instance to January 20 2020 by:
+If so (this happens when during running the script the date changed because you crossed midnight), you need to set one version (you can choose what you want, but it should be a different and later date than the one which was previously published). One can set the date for instance to September 20 2024 by:
 ```shell
 ./versions.sh -v v20240920 -m CMIP6/
