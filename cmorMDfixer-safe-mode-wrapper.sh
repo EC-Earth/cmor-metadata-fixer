@@ -7,15 +7,17 @@
 # This scripts needs two arguments:
 #
 # ${1} the first   argument is the number of cores (one node can be used).
-# ${2} the second  argument is path of the directory with the cmorised data.
+# ${2} the second  argument is path + filename of the metadata json file.
+# ${2} the third   argument is path of the directory with the cmorised data.
 #
 # Run this script without arguments for examples how to call this script.
 #
 
-if [ "$#" -eq 2 ]; then
+if [ "$#" -eq 3 ]; then
 
    number_of_cores=$1
-   dir_with_cmorised_data=$2
+   metadata_file=$2
+   dir_with_cmorised_data=$3
 
    olist_1_filename='list-of-modified-files.txt'
    olist_2_filename='list-of-modified-files-2.txt'
@@ -35,15 +37,16 @@ if [ "$#" -eq 2 ]; then
     exit 1
    fi
 
-   case "${number_of_cores}" in
-       ("" | *[!0-9]*)
-           echo -e "\e[1;31m Error:\e[0m"' Invalid value for the number of cores: ' ${number_of_cores} '. It should be [0-9][0-9]' >&2
-           exit 1
-   esac
+   if [ "${number_of_cores}" -lt 1 ] || [ "$1" -gt 128 ]; then
+    echo -e "\e[1;31m Error:\e[0m"' The value of number of cores ' ${number_of_cores} ' is out of range. Allowed range: 1-128.' >&2
+    exit 1
+   fi
 
-   if [ "${number_of_cores}" -lt 1 ] || [ "$1" -gt 100 ]; then
-       echo -e "\e[1;31m Error:\e[0m"' The value of number of cores ' ${number_of_cores} ' is out of range. Allowed range: 1-100.' >&2
-       exit 1
+   if [ ! -f ${metadata_file} ]; then
+    echo
+    echo -e "\e[1;31m Error:\e[0m"' the metadata file ' ${metadata_file} ' does not exist.'
+    echo
+    exit 1
    fi
 
    if [ ! -d ${dir_with_cmorised_data} ]; then
@@ -55,7 +58,7 @@ if [ "$#" -eq 2 ]; then
 
 
    # First run cmorMDfixer in the save dry-run mode in order to figure out if there is any file with an error at all:
-   ./cmorMDfixer.py --dry --verbose --olist --npp ${number_of_cores} ${dir_with_cmorised_data} &> cmorMDfixer-messages-1.log
+   ./cmorMDfixer.py --dry --verbose --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &> cmorMDfixer-messages-1.log
 
    # For testing the script for the non-empty olist case or the case the olists differ:
   #echo ' Make non-empty for test only.' >> ${olist_1_filename}
@@ -76,12 +79,12 @@ if [ "$#" -eq 2 ]; then
     exit 1
    else
     echo
-    echo ' There are files the dataset which are incorrect, so ' $0 ' will continue to apply the fix for these files.'
+    echo ' There are files in the dataset which are incorrect, so ' $0 ' will continue to apply the fix for these files.'
     echo
    fi
 
    # Create, before really applying the changes, the olist for the --forceid case:
-   ./cmorMDfixer.py --dry --verbose --forceid --olist --npp ${number_of_cores} ${dir_with_cmorised_data} &> cmorMDfixer-messages-2.log
+   ./cmorMDfixer.py --dry --verbose --forceid --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &> cmorMDfixer-messages-2.log
 
    if [[ ! -e ${olist_2_filename} ]] ; then
     echo
@@ -91,7 +94,7 @@ if [ "$#" -eq 2 ]; then
    fi
 
    # Apply the changes the olist for the --forceid case:
-   ./cmorMDfixer.py --verbose --forceid --olist --npp ${number_of_cores} ${dir_with_cmorised_data} &> cmorMDfixer-messages-3.log
+   ./cmorMDfixer.py --verbose --forceid --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &> cmorMDfixer-messages-3.log
 
    if [[ ! -e ${olist_3_filename} ]] ; then
     echo
@@ -116,7 +119,7 @@ if [ "$#" -eq 2 ]; then
 
 
    # Final check: Check whether after modifying the errors, the dataser is now error free:
-   ./cmorMDfixer.py --dry --verbose --olist --npp ${number_of_cores} ${dir_with_cmorised_data} &> cmorMDfixer-messages-4.log
+   ./cmorMDfixer.py --dry --verbose --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &> cmorMDfixer-messages-4.log
 
    if [[ ! -e ${olist_4_filename} ]] ; then
     echo
@@ -140,7 +143,7 @@ if [ "$#" -eq 2 ]; then
    echo ' The versions.sh script detects the following versions in the final corrected dataset:'
    ./versions.sh -l ${dir_with_cmorised_data}
   #echo ' In order to set one new version (recommended), for instance to February 20 2020, the versions.sh script can be run now by:'
-  #echo ' ./versions.sh -v v20200220 -m CMIP6/'
+  #echo ' ./versions.sh -v v20240920 -m CMIP6/'
    echo
 
 
@@ -148,8 +151,10 @@ else
     echo
     echo "  This scripts requires two arguments:"
     echo "   The first  argument: is the number of cores (one node can be used)."
-    echo "   The second argument: is the path of the directory which contains the cmorised data."
+    echo "   The second argument: is the path + filename of the metadata json file."
+    echo "   The third  argument: is the path of the directory which contains the cmorised data."
     echo "  For instance:"
-    echo "   $0 1 CMIP6/"
+    echo "   $0 1 metadata-file.json CMIP6/"
+    echo "   $0 1 metadata-correction-cases/knmi-metadata-corrections-piControl.json cmorMDfixer-test-data/test-set-01/CMIP6"
     echo
 fi
