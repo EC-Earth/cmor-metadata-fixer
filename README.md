@@ -77,6 +77,15 @@ conda deactivate                          # Deactivating the active (here cmorMD
  # Clean and revert the changes made above:
  ./test-cmorMDfixer.sh clean
 
+ # A real example with the cmorMDfixer-safe-mode-wrapper.sh using the test data:
+ ./cmorMDfixer-safe-mode-wrapper.sh 1 metadata-correction-cases/knmi-metadata-corrections-piControl.json cmorMDfixer-test-data/test-set-01/CMIP6
+ # See what happens when this is repeated on corrected data:
+ rm -f list-of-modified-files*.txt
+ ./cmorMDfixer-safe-mode-wrapper.sh 1 metadata-correction-cases/knmi-metadata-corrections-piControl.json cmorMDfixer-test-data/test-set-01/CMIP6
+ # Clean and revert the changes made above:
+ ./test-cmorMDfixer.sh clean
+ rm -f list-of-modified-files*.txt cmorMDfixer-messages-*.log
+
  # Deactivating the active (here cmorMDfixer) environment
  conda deactivate
 ```
