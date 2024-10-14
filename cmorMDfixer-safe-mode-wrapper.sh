@@ -58,7 +58,7 @@ if [ "$#" -eq 3 ]; then
 
 
    # First run cmorMDfixer in the save dry-run mode in order to figure out if there is any file with an error at all:
-   ./cmorMDfixer.py --dry --verbose --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &> cmorMDfixer-messages-1.log
+   ./cmorMDfixer.py --dry --verbose --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} >& cmorMDfixer-messages-1.log
 
    # For testing the script for the non-empty olist case or the case the olists differ:
   #echo ' Make non-empty for test only.' >> ${olist_1_filename}
@@ -84,7 +84,7 @@ if [ "$#" -eq 3 ]; then
    fi
 
    # Create, before really applying the changes, the olist for the --forceid case:
-   ./cmorMDfixer.py --dry --verbose --forceid --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &> cmorMDfixer-messages-2.log
+   ./cmorMDfixer.py --dry --verbose --forceid --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} >& cmorMDfixer-messages-2.log
 
    if [[ ! -e ${olist_2_filename} ]] ; then
     echo
@@ -94,7 +94,7 @@ if [ "$#" -eq 3 ]; then
    fi
 
    # Apply the changes the olist for the --forceid case:
-   ./cmorMDfixer.py --verbose --forceid --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &> cmorMDfixer-messages-3.log
+   ./cmorMDfixer.py --verbose --forceid --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} >& cmorMDfixer-messages-3.log
 
    if [[ ! -e ${olist_3_filename} ]] ; then
     echo
@@ -119,7 +119,7 @@ if [ "$#" -eq 3 ]; then
 
 
    # Final check: Check whether after modifying the errors, the dataser is now error free:
-   ./cmorMDfixer.py --dry --verbose --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &> cmorMDfixer-messages-4.log
+   ./cmorMDfixer.py --dry --verbose --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} >& cmorMDfixer-messages-4.log
 
    if [[ ! -e ${olist_4_filename} ]] ; then
     echo
