@@ -81,6 +81,7 @@ def listener(q, fname):
 def main(args=None):
     if args is None:
         pass
+    ofilename = "list-of-modified-files-1.txt"
     formatter = lambda prog: argparse.HelpFormatter(prog,max_help_position=30)
     parser = argparse.ArgumentParser(description="Fix meta data i.e. CMOR attributes in cmorized files", formatter_class=formatter)
     parser.add_argument("meta", metavar="FILE.json", type=str,
@@ -98,7 +99,7 @@ def main(args=None):
     parser.add_argument("--forceid", "-f", action="store_true", default=False,
                         help="Force new tracking id (default: no)")
     parser.add_argument("--olist", "-o", action="store_true", default=False,
-                        help="Write list-of-modified-files.txt listing all modified files")
+                        help="Write " + ofilename + " listing all modified files")
     parser.add_argument("--addattrs", "-a", action="store_true", default=False,
                         help="Add new attributes from metadata file")
     parser.add_argument("--npp", type=int, default=1, help="Number of sub-processes to launch (default 1)")
@@ -126,7 +127,6 @@ def main(args=None):
     if args.npp < 1:
         log.error("Invalid number of subprocesses chosen, please pick a number > 0")
         return
-    ofilename = "list-of-modified-files.txt"
     if args.olist and os.path.isfile(ofilename):
         i = 1
         while os.path.isfile(ofilename):

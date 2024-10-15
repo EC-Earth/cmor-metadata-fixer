@@ -19,19 +19,21 @@ if [ "$#" -eq 3 ]; then
    metadata_file=$2
    dir_with_cmorised_data=$3
 
-   olist_1_filename='list-of-modified-files.txt'
+   olist_1_filename='list-of-modified-files-1.txt'
    olist_2_filename='list-of-modified-files-2.txt'
    olist_3_filename='list-of-modified-files-3.txt'
-   olist_4_filename='list-of-modified-files-4.txt'
-   diff_olists='diff-list-of-modified-files.txt'
+   diff_olists='interruption-differences-list.txt'
 
-   if [[ -e ${olist_1_filename} || -e ${olist_2_filename} || -e ${olist_3_filename} || -e ${olist_4_filename} || -e ${diff_olists} ]] ; then
+   log_1_filename='cmorMDfixer-messages-1.log'
+   log_2_filename='cmorMDfixer-messages-2.log'
+   log_3_filename='cmorMDfixer-messages-3.log'
+
+   if [[ -e ${olist_1_filename} || -e ${olist_2_filename} || -e ${olist_3_filename} || -e ${diff_olists} ]] ; then
     echo
     echo ' Aborting' $0 ' because you have to rename any of the files with the names:'
     echo ' ' ${olist_1_filename}
     echo ' ' ${olist_2_filename}
     echo ' ' ${olist_3_filename}
-    echo ' ' ${olist_4_filename}
     echo ' ' ${diff_olists}
     echo
     exit 1
@@ -57,14 +59,10 @@ if [ "$#" -eq 3 ]; then
    fi
 
 
-   # First run cmorMDfixer in the save dry-run mode in order to figure out if there is any file with an error at all:
-   ./cmorMDfixer.py --dry --verbose --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &> cmorMDfixer-messages-1.log
+   echo 'Step 1: Before really applying the changes, create the olist for the --forceid case.' > ${log_1_filename}
+   echo >> ${log_1_filename}
+   ./cmorMDfixer.py --dry --verbose --forceid --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &>> ${log_1_filename}
 
-   # For testing the script for the non-empty olist case or the case the olists differ:
-  #echo ' Make non-empty for test only.' >> ${olist_1_filename}
-  #more bup-list-of-modified-files-3.txt > ${olist_1_filename}
-   
-  #sleep 1
    if [[ ! -e ${olist_1_filename} ]] ; then
     echo
     echo -e "\e[1;31m Error:\e[0m"' the file ' ${olist_1_filename} ' should have been produced.'
@@ -72,19 +70,9 @@ if [ "$#" -eq 3 ]; then
     exit 1
    fi
 
-   if [[ ! -s ${olist_1_filename} ]]; then
-    echo
-    echo ' All files in the entire dataset are correct, so ' $0 ' will not apply any changes.'
-    echo
-    exit 1
-   else
-    echo
-    echo ' There are files in the dataset which are incorrect, so ' $0 ' will continue to apply the fix for these files.'
-    echo
-   fi
-
-   # Create, before really applying the changes, the olist for the --forceid case:
-   ./cmorMDfixer.py --dry --verbose --forceid --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &> cmorMDfixer-messages-2.log
+   echo 'Step 2: Apply the changes for the files listed in the olist for the --forceid case.' > ${log_2_filename}
+   echo >> ${log_2_filename}
+   ./cmorMDfixer.py --verbose --forceid --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &>> ${log_2_filename}
 
    if [[ ! -e ${olist_2_filename} ]] ; then
     echo
@@ -93,22 +81,12 @@ if [ "$#" -eq 3 ]; then
     exit 1
    fi
 
-   # Apply the changes the olist for the --forceid case:
-   ./cmorMDfixer.py --verbose --forceid --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &> cmorMDfixer-messages-3.log
 
-   if [[ ! -e ${olist_3_filename} ]] ; then
-    echo
-    echo -e "\e[1;31m Error:\e[0m"' the file ' ${olist_3_filename} ' should have been produced.'
-    echo
-    exit 1
-   fi
-
-
-   diff ${olist_3_filename} ${olist_2_filename} > ${diff_olists}
+   diff ${olist_2_filename} ${olist_1_filename} > ${diff_olists}
 
    if [[ ! -s ${diff_olists} ]]; then
     echo
-    echo ' The changes are applied and agree with the preceding dry-run, so all seems fine.'
+    echo ' The changes are applied and agree with the preceding dry-run, so all seems fine (no interruption damage).'
     echo
     rm -f ${diff_olists}
    else
@@ -118,32 +96,32 @@ if [ "$#" -eq 3 ]; then
    fi
 
 
-   # Final check: Check whether after modifying the errors, the dataser is now error free:
-   ./cmorMDfixer.py --dry --verbose --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &> cmorMDfixer-messages-4.log
+   echo 'Step 3: Check whether there are still modifications detected which should have been applied already (possibly as a consequence of an earlier interruption).' > ${log_3_filename}
+   echo >> ${log_3_filename}
+   ./cmorMDfixer.py --dry --verbose --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &>> ${log_3_filename}
 
-   if [[ ! -e ${olist_4_filename} ]] ; then
+   if [[ ! -e ${olist_3_filename} ]] ; then
     echo
-    echo -e "\e[1;31m Error:\e[0m"' the file ' ${olist_4_filename} ' should have been produced (in the post checking phase).'
+    echo -e "\e[1;31m Error:\e[0m"' the file ' ${olist_3_filename} ' should have been produced (in the post checking phase).'
     echo
     exit 1
    fi
 
-   if [[ ! -s ${olist_4_filename} ]]; then
+   if [[ ! -s ${olist_3_filename} ]]; then
     echo
     echo ' All files in the entire dataset are correct after correcting, so ending successful!'
     echo
    else
     echo
-    echo -e "\e[1;33m Warning:\e[0m"' After correcting with cmorMDfixer, it seems there are still errors in the dataset. Check the files by looking into ' ${olist_4_filename}
+    echo -e "\e[1;33m Warning:\e[0m"' After correcting with cmorMDfixer, it seems there are still errors in the dataset Check the files by looking into ' ${olist_3_filename}
     echo
    fi
 
-   # Run the script ./versions.sh for instance to set all version directory names to January 20 2020:
    echo
    echo ' The versions.sh script detects the following versions in the final corrected dataset:'
    ./versions.sh -l ${dir_with_cmorised_data}
-  #echo ' In order to set one new version (recommended), for instance to February 20 2020, the versions.sh script can be run now by:'
-  #echo ' ./versions.sh -v v20240920 -m CMIP6/'
+  #echo ' In order to set one new version (recommended), for instance to October 20 2024, the versions.sh script can be run now by:'
+  #echo ' ./versions.sh -v v20241020 -m CMIP6/'
    echo
 
 

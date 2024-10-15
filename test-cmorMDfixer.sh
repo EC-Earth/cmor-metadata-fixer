@@ -23,7 +23,7 @@
   choice=$1
 
   if [ "${choice}" = "clean" ]; then
-   rm -f list-of-modified-files.txt
+   rm -f list-of-modified-files-1.txt
    git checkout ${CMORISEDDIR}/*/*/*/*/*/Eyr/*/*/*/*.nc
   elif [ "${choice}" = "dry" ] || [ "${choice}" = "modify" ]; then
    if [ ! "${CONDA_DEFAULT_ENV}" = "cmorMDfixer" ]; then
@@ -42,8 +42,8 @@
    ncdump -h ${test_file} | grep -e branch_time_in_parent -e branch_time_in_child -e parent_experiment_id
    echo
 
-   # Remove the list-of-modified-files.txt to avoid the warning during the test that another file name is tried:
-   rm -f list-of-modified-files.txt
+   # Remove the list-of-modified-files-1.txt to avoid the warning during the test that another file name is tried:
+   rm -f list-of-modified-files-1.txt
 
    verbose="--verbose"
    verbose=""
@@ -59,8 +59,8 @@
    ncdump -h ${test_file} | grep -e branch_time_in_parent -e branch_time_in_child -e parent_experiment_id
    echo
 
-   echo "The treated files are listed in list-of-modified-files.txt:"
-   more list-of-modified-files.txt
+   echo "The treated files are listed in list-of-modified-files-1.txt:"
+   more list-of-modified-files-1.txt
    echo
   else
    echo " The argument has to be one of the following options:"
