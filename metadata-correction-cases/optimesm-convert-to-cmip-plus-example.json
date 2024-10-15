@@ -1,0 +1,8 @@
+{
+    "activity_id":         "OPTIMESM-project",
+    "experiment_id":       "optimesm-experiment-something",
+    "table_id":            "LPyr",
+    "variable_id":         "treeFrac",
+    "source_id":           "EC-Earth3-ESM-1 (2024)",
+    "mip_era":             "CMIP6plus"
+}
