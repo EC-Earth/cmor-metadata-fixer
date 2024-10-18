@@ -9,7 +9,7 @@ import uuid
 import multiprocessing
 from functools import partial
 
-# import datetime
+import datetime
 
 version_cmorMDfixer = 'v1.0'
 
@@ -17,8 +17,10 @@ log = logging.getLogger(os.path.basename(__file__))
 
 skipped_attributes = ["source", "comment"]
 
+log_overview_modified_attributes = ''
 
 def fix_file(path, write=True, keepid=False, forceid=False, metadata=None, add_attributes=False):
+    global log_overview_modified_attributes
     ds = netCDF4.Dataset(path, "r+" if write else "r")
     modified = forceid
 
@@ -30,6 +32,7 @@ def fix_file(path, write=True, keepid=False, forceid=False, metadata=None, add_a
             if (not hasattr(ds, attname) and add_attributes) or \
                     (hasattr(ds, attname) and str(getattr(ds, attname)) != str(attval)):
                 log.info("Setting metadata field %s to %s in %s" % (attname, attval, ds.filepath()))
+                log_overview_modified_attributes=log_overview_modified_attributes+'Set ' + attname + ' to ' + attval + '. '
                 if write:
                     setattr(ds, attname, attval)
                 modified = True
@@ -40,13 +43,16 @@ def fix_file(path, write=True, keepid=False, forceid=False, metadata=None, add_a
             setattr(ds, "tracking_id", tr_id)
     if modified:
         history = getattr(ds, "history", "")
+        creation_date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
         log.info("Appending message about modification to the history attribute.")
         log.info("The latest applied cmorMDfixer version attribute is set to: " + str(version_cmorMDfixer))
         if write:
-            setattr(ds, "history", history + 'The cmorMDfixer version %s script has been applied.' % (version_cmorMDfixer))
+            if log_overview_modified_attributes == '':
+             log_overview_modified_attributes = 'No attribute has been modified.'
             setattr(ds, "latest_applied_cmorMDfixer_version", version_cmorMDfixer)
+            setattr(ds, "history", history + '%s: Metadata update by applying the cmorMDfixer %s: %s \n' % (creation_date, version_cmorMDfixer, log_overview_modified_attributes))
     #    if modified:
-    #        creation_date = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    #        creation_date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
     #        log.info("Setting creation_dr(ate to %s for %s" % (creation_date, ds.filepath()))
     #        if write:
     #            setattr(ds, "creation_date", creation_date)
