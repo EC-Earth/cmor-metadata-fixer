@@ -111,28 +111,39 @@ def main(args=None):
     parser.add_argument("--npp", type=int, default=1, help="Number of sub-processes to launch (default 1)")
 
     args = parser.parse_args()
+    
+    # Obligatory arguments:
+    metajson = args.meta
+    if not os.path.isfile(metajson):
+        log.error("The metadata json file argument %s is not a valid file: Skipping the metadata modification." % metajson)
+        return
+    with open(metajson) as jsonfile:
+        metadata = json.load(jsonfile)
+    odir = args.datadir
+    if not os.path.isdir(odir):
+        log.error("Data directory argument %s is not a valid directory: Skipping the metadata modification." % odir)
+        return
+
+    # Optional arguments:
+    # depth:
+    depth = getattr(args, "depth", None)
+    # verbose:
     logformat = "%(asctime)s %(levelname)s:%(name)s: %(message)s"
     logdateformat = "%Y-%m-%d %H:%M:%S"
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG, format=logformat, datefmt=logdateformat)
     else:
         logging.basicConfig(level=logging.WARNING, format=logformat, datefmt=logdateformat)
+    # keepid & forceid:
     if args.keepid and args.forceid:
-        log.error("Options keepid and forceid are mutually exclusive, please choose either one.")
+        log.error("Options keepid and forceid are mutually exclusive, please choose either the one or the other.")
         return
-    metajson = args.meta
-    metadata = None
-    if metajson is not None:
-        with open(metajson) as jsonfile:
-            metadata = json.load(jsonfile)
-    odir = args.datadir
-    if not os.path.isdir(odir):
-        log.error("Data directory argument %s is not a valid directory: skipping fix" % odir)
+    # npp:
+    npp=args.npp
+    if npp < 1 or npp > 128:
+        log.error("Invalid number of subprocesses chosen, please pick a number in the range: 1 - 128")
         return
-    depth = getattr(args, "depth", None)
-    if args.npp < 1:
-        log.error("Invalid number of subprocesses chosen, please pick a number > 0")
-        return
+    # olist (list-of-modified-files):
     if args.olist and os.path.isfile(ofilename):
         i = 1
         while os.path.isfile(ofilename):
@@ -140,7 +151,9 @@ def main(args=None):
             newfilename = "list-of-modified-files-" + str(i) + ".txt"
             log.warning("Output file name %s already exists, trying %s" % (ofilename, newfilename))
             ofilename = newfilename
-    if args.npp == 1:
+
+    # Sequential or parallel call:
+    if npp == 1:
         ofile = open(ofilename, 'w') if args.olist else None
         worker = partial(process_file, flog=ofile, write=not args.dry, keepid=args.keepid, forceid=args.forceid,
                          metadata=metadata, add_attributes=args.addattrs)
@@ -160,12 +173,11 @@ def main(args=None):
                         considered_files.append(fullpath)
         manager = multiprocessing.Manager()
         fq = manager.Queue()
-        pool = multiprocessing.Pool(processes=args.npp)
-        watcher = pool.apply_async(listener, (fq, ofilename))
+        pool = multiprocessing.Pool(processes=npp)
+        watcher = pool.apply_async(func=listener, args=(fq, ofilename))
         jobs = []
         for f in considered_files:
-            job = pool.apply_async(process_file, (f, fq, not args.dry, args.keepid, args.forceid, metadata,
-                                                  args.addattrs))
+            job = pool.apply_async(func=process_file, args=(f, fq, not args.dry, args.keepid, args.forceid, metadata, args.addattrs))
             jobs.append(job)
         for job in jobs:
             job.get()
