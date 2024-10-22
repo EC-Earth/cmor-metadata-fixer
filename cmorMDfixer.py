@@ -60,11 +60,11 @@ def fix_file(path, write=True, keepid=False, forceid=False, metadata=None, add_a
     return modified
 
 
-def process_file(path, flog=None, write=True, keepid=False, forceid=False, metadata=None, add_attributes=False):
+def process_file(path, npp=1, flog=None, write=True, keepid=False, forceid=False, metadata=None, add_attributes=False):
     try:
         modified = fix_file(path, write, keepid, forceid, metadata, add_attributes)
         if modified:
-            if type(flog) == type(multiprocessing.Queue()):
+            if npp != 1:
                 flog.put(path)
             elif hasattr(flog, "write"):
                 flog.write(path + '\n')
@@ -155,7 +155,7 @@ def main(args=None):
     # Sequential or parallel call:
     if npp == 1:
         ofile = open(ofilename, 'w') if args.olist else None
-        worker = partial(process_file, flog=ofile, write=not args.dry, keepid=args.keepid, forceid=args.forceid,
+        worker = partial(process_file, npp=1, flog=ofile, write=not args.dry, keepid=args.keepid, forceid=args.forceid,
                          metadata=metadata, add_attributes=args.addattrs)
         for root, dirs, files in os.walk(odir, followlinks=False):
             if depth is None or root[len(odir):].count(os.sep) < int(depth):
@@ -177,7 +177,7 @@ def main(args=None):
         watcher = pool.apply_async(func=listener, args=(fq, ofilename))
         jobs = []
         for f in considered_files:
-            job = pool.apply_async(func=process_file, args=(f, fq, not args.dry, args.keepid, args.forceid, metadata, args.addattrs))
+            job = pool.apply_async(func=process_file, args=(f, npp, fq, not args.dry, args.keepid, args.forceid, metadata, args.addattrs))
             jobs.append(job)
         for job in jobs:
             job.get()
