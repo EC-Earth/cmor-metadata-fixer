@@ -6,10 +6,9 @@ import json
 import netCDF4
 import logging
 import uuid
+import datetime
 import multiprocessing
 from functools import partial
-
-import datetime
 
 version_cmorMDfixer = 'v1.0'
 
@@ -51,11 +50,6 @@ def fix_file(path, write=True, keepid=False, forceid=False, metadata=None, add_a
              log_overview_modified_attributes = 'No attribute has been modified.'
             setattr(ds, "latest_applied_cmorMDfixer_version", version_cmorMDfixer)
             setattr(ds, "history", history + '%s: Metadata update by applying the cmorMDfixer %s: %s \n' % (creation_date, version_cmorMDfixer, log_overview_modified_attributes))
-    #    if modified:
-    #        creation_date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
-    #        log.info("Setting creation_dr(ate to %s for %s" % (creation_date, ds.filepath()))
-    #        if write:
-    #            setattr(ds, "creation_date", creation_date)
     ds.close()
     return modified
 
@@ -111,7 +105,7 @@ def main(args=None):
     parser.add_argument("--npp", type=int, default=1, help="Number of sub-processes to launch (default 1)")
 
     args = parser.parse_args()
-    
+
     # Obligatory arguments:
     metajson = args.meta
     if not os.path.isfile(metajson):
