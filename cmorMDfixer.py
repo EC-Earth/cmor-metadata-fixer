@@ -10,7 +10,9 @@ import datetime
 import multiprocessing
 from functools import partial
 
-version_cmorMDfixer = 'v1.0'
+script_version         = 'v1.0'
+script_name            = 'cmorMDfixer'
+latest_applied_version = 'latest_applied_cmorMDfixer_version'
 
 log = logging.getLogger(os.path.basename(__file__))
 
@@ -44,12 +46,12 @@ def fix_file(path, write=True, keepid=False, forceid=False, metadata=None, add_a
         history = getattr(ds, "history", "")
         creation_date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
         log.info("Appending message about modification to the history attribute.")
-        log.info("The latest applied cmorMDfixer version attribute is set to: " + str(version_cmorMDfixer))
+        log.info('Set attribute %s to %s' % (latest_applied_version, script_version))
         if write:
             if log_overview_modified_attributes == '':
              log_overview_modified_attributes = 'No attribute has been modified.'
-            setattr(ds, "latest_applied_cmorMDfixer_version", version_cmorMDfixer)
-            setattr(ds, "history", history + '%s: Metadata update by applying the cmorMDfixer %s: %s \n' % (creation_date, version_cmorMDfixer, log_overview_modified_attributes))
+            setattr(ds, latest_applied_version, script_version)
+            setattr(ds, "history", history + '%s: Metadata update by applying the %s %s: %s \n' % (creation_date, script_name, script_version, log_overview_modified_attributes))
     ds.close()
     return modified
 
