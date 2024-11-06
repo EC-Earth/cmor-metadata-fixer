@@ -8,6 +8,7 @@ import logging
 import uuid
 import datetime
 import multiprocessing
+from pathlib import Path
 from functools import partial
 
 script_version         = 'v1.0'
@@ -100,8 +101,8 @@ def main(args=None):
                         help="Keep tracking id (default: no)")
     parser.add_argument("--forceid", "-f", action="store_true", default=False,
                         help="Force new tracking id (default: no)")
-    parser.add_argument("--olist", "-o", action="store_true", default=False,
-                        help="Write " + ofilename + " listing all modified files")
+    parser.add_argument("--olist", metavar="LOGDIR", type=str, default=False,
+                        help="List all modified files in " + ofilename + " in LOGDIR")
     parser.add_argument("--addattrs", "-a", action="store_true", default=False,
                         help="Add new attributes from metadata file")
     parser.add_argument("--npp", type=int, default=1, help="Number of sub-processes to launch (default 1)")
@@ -139,18 +140,30 @@ def main(args=None):
     if npp < 1 or npp > 128:
         log.error("Invalid number of subprocesses chosen, please pick a number in the range: 1 - 128")
         return
-    # olist (list-of-modified-files):
-    if args.olist and os.path.isfile(ofilename):
+    # olist (LOGDIR/list-of-modified-files):
+    logdir = getattr(args, "olist", None)
+    if logdir:
+       if os.path.isdir(logdir):
+          if not os.access(logdir, os.W_OK):
+             log.error("Abort because no write permission for the LOGDIR %s" % logdir)
+             return
+       elif os.path.isfile(logdir):
+           log.error("Abort because %s is not a directory." % logdir)
+           return
+       else:
+          Path(logdir).mkdir(parents=True, exist_ok=True)
+       ofilename = os.path.join(logdir, ofilename)
+       if os.path.isfile(ofilename):
         i = 1
         while os.path.isfile(ofilename):
             i += 1
-            newfilename = "list-of-modified-files-" + str(i) + ".txt"
+            newfilename = os.path.join(logdir, "list-of-modified-files-" + str(i) + ".txt")
             log.warning("Output file name %s already exists, trying %s" % (ofilename, newfilename))
             ofilename = newfilename
 
     # Sequential or parallel call:
     if npp == 1:
-        ofile = open(ofilename, 'w') if args.olist else None
+        ofile = open(ofilename, 'w') if logdir else None
         worker = partial(process_file, npp=1, flog=ofile, write=not args.dry, keepid=args.keepid, forceid=args.forceid,
                          metadata=metadata, add_attributes=args.addattrs)
         for root, dirs, files in os.walk(odir, followlinks=False):

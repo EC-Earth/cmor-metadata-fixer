@@ -11,7 +11,10 @@
 
 
 # Example running directly from the command line on the main node:
-# ./cmorMDfixer.py --verbose --dry --forceid --olist --npp 1 /scratch/nktr/cmorised-results/cmorMDfixer-test-data/test-set-01/CMIP6
+# ./cmorMDfixer.py --verbose --dry --forceid --olist log-dir --npp 1 metadata-correction-cases/knmi-metadata-corrections-piControl.json ./cmorMDfixer-test-data/test-set-01/CMIP6
+
+# Example running directly from the command line on the main node from another location:
+# ./cmorize/cmor-metadata-fixer/cmorMDfixer.py --verbose --dry --forceid --olist log-dir --npp 1 cmorize/cmor-metadata-fixer/metadata-correction-cases/knmi-metadata-corrections-piControl.json cmorize/cmor-metadata-fixer/cmorfixer-test-data/test-set-01
 
 
  if [ "$#" -eq 1 ]; then
@@ -19,11 +22,13 @@
   METADATAFILE=metadata-correction-cases/knmi-metadata-corrections-piControl.json
   CMORISEDDIR=cmorMDfixer-test-data/test-set-01/CMIP6
   test_file=${CMORISEDDIR}/CMIP/EC-Earth-Consortium/EC-Earth3/piControl/r1i1p1f1/Eyr/treeFrac/gr/v20240129/treeFrac_Eyr_EC-Earth3_piControl_r1i1p1f1_gr_1850-1850.nc
+  logdir='log-dir'
+  list_of_modified_files=${logdir}/list-of-modified-files-1.txt
 
   choice=$1
 
   if [ "${choice}" = "clean" ]; then
-   rm -f list-of-modified-files-1.txt
+   rm -f ${list_of_modified_files}
    git checkout ${CMORISEDDIR}/*/*/*/*/*/Eyr/*/*/*/*.nc
   elif [ "${choice}" = "dry" ] || [ "${choice}" = "modify" ]; then
    if [ ! "${CONDA_DEFAULT_ENV}" = "cmorMDfixer" ]; then
@@ -42,15 +47,15 @@
    ncdump -h ${test_file} | grep -e branch_time_in_parent -e branch_time_in_child -e parent_experiment_id
    echo
 
-   # Remove the list-of-modified-files-1.txt to avoid the warning during the test that another file name is tried:
-   rm -f list-of-modified-files-1.txt
+   # Remove the ${list_of_modified_files} to avoid the warning during the test that another file name is tried:
+   rm -f ${list_of_modified_files}
 
    verbose="--verbose"
    verbose=""
    if [ "${choice}" = "dry" ]; then
-   ./cmorMDfixer.py ${verbose} --dry --forceid --olist --addattrs --npp 1 ${METADATAFILE} ${CMORISEDDIR}
+   ./cmorMDfixer.py ${verbose} --dry --forceid --olist ${logdir} --addattrs --npp 1 ${METADATAFILE} ${CMORISEDDIR}
     else
-   ./cmorMDfixer.py ${verbose}       --forceid --olist --addattrs --npp 1 ${METADATAFILE} ${CMORISEDDIR}
+   ./cmorMDfixer.py ${verbose}       --forceid --olist ${logdir} --addattrs --npp 1 ${METADATAFILE} ${CMORISEDDIR}
    fi
 
    echo
@@ -59,8 +64,8 @@
    ncdump -h ${test_file} | grep -e branch_time_in_parent -e branch_time_in_child -e parent_experiment_id
    echo
 
-   echo "The treated files are listed in list-of-modified-files-1.txt:"
-   more list-of-modified-files-1.txt
+   echo "The treated files are listed in ${list_of_modified_files}:"
+   more ${list_of_modified_files}
    echo
   else
    echo " The argument has to be one of the following options:"

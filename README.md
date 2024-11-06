@@ -103,7 +103,7 @@ conda deactivate                          # Deactivating the active (here cmorMD
 
  # Replace with the cmorMDfixer.py all cmor attribute values listed in the metadata-corrections.json file
  # on all files within the CMIP6 directory:
- ./cmorMDfixer.py --verbose --forceid --olist --npp 1 metadata-corrections.json CMIP6/
+ ./cmorMDfixer.py --verbose --forceid --olist log-dir --npp 1 metadata-corrections.json CMIP6/
 
  # Deactivating the active (here cmorMDfixer) environment
  conda deactivate

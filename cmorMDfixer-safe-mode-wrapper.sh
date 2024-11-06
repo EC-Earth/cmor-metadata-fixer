@@ -19,14 +19,16 @@ if [ "$#" -eq 3 ]; then
    metadata_file=$2
    dir_with_cmorised_data=$3
 
-   olist_1_filename='list-of-modified-files-1.txt'
-   olist_2_filename='list-of-modified-files-2.txt'
-   olist_3_filename='list-of-modified-files-3.txt'
-   diff_olists='interruption-differences-list.txt'
+   logdir='log-dir'
+   mkdir -p ${logdir}
+   olist_1_filename=${logdir}/'list-of-modified-files-1.txt'
+   olist_2_filename=${logdir}/'list-of-modified-files-2.txt'
+   olist_3_filename=${logdir}/'list-of-modified-files-3.txt'
+   diff_olists=${logdir}/'interruption-differences-list.txt'
 
-   log_1_filename='cmorMDfixer-messages-1.log'
-   log_2_filename='cmorMDfixer-messages-2.log'
-   log_3_filename='cmorMDfixer-messages-3.log'
+   log_1_filename=${logdir}/'cmorMDfixer-messages-1.log'
+   log_2_filename=${logdir}/'cmorMDfixer-messages-2.log'
+   log_3_filename=${logdir}/'cmorMDfixer-messages-3.log'
 
    if [[ -e ${olist_1_filename} || -e ${olist_2_filename} || -e ${olist_3_filename} || -e ${diff_olists} ]] ; then
     echo
@@ -39,10 +41,11 @@ if [ "$#" -eq 3 ]; then
     exit 1
    fi
 
-   if [ "${number_of_cores}" -lt 1 ] || [ "$1" -gt 128 ]; then
-    echo -e "\e[1;31m Error:\e[0m"' The value of number of cores ' ${number_of_cores} ' is out of range. Allowed range: 1-128.' >&2
-    exit 1
-   fi
+   case "${number_of_cores}" in
+       ("" | *[!0-9]*)
+           echo -e "\e[1;31m Error:\e[0m"' Invalid value for the number of cores: ' ${number_of_cores} '. It should be [0-9][0-9][0-9]' >&2
+           exit 1
+   esac
 
    if [ ! -f ${metadata_file} ]; then
     echo
@@ -61,7 +64,7 @@ if [ "$#" -eq 3 ]; then
 
    echo 'Step 1: Before really applying the changes, create the olist for the --forceid case.' > ${log_1_filename}
    echo >> ${log_1_filename}
-   ./cmorMDfixer.py --dry --verbose --forceid --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &>> ${log_1_filename}
+   ./cmorMDfixer.py --dry --verbose --forceid --olist ${logdir} --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &>> ${log_1_filename}
 
    if [[ ! -e ${olist_1_filename} ]] ; then
     echo
@@ -72,7 +75,7 @@ if [ "$#" -eq 3 ]; then
 
    echo 'Step 2: Apply the changes for the files listed in the olist for the --forceid case.' > ${log_2_filename}
    echo >> ${log_2_filename}
-   ./cmorMDfixer.py --verbose --forceid --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &>> ${log_2_filename}
+   ./cmorMDfixer.py --verbose --forceid --olist ${logdir} --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &>> ${log_2_filename}
 
    if [[ ! -e ${olist_2_filename} ]] ; then
     echo
@@ -98,7 +101,7 @@ if [ "$#" -eq 3 ]; then
 
    echo 'Step 3: Check whether there are still modifications detected which should have been applied already (possibly as a consequence of an earlier interruption).' > ${log_3_filename}
    echo >> ${log_3_filename}
-   ./cmorMDfixer.py --dry --verbose --olist --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &>> ${log_3_filename}
+   ./cmorMDfixer.py --dry --verbose --olist ${logdir} --npp ${number_of_cores} ${metadata_file} ${dir_with_cmorised_data} &>> ${log_3_filename}
 
    if [[ ! -e ${olist_3_filename} ]] ; then
     echo
