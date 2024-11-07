@@ -14,7 +14,7 @@
 # ./cmorMDfixer.py --verbose --dry --forceid --olist log-dir --npp 1 metadata-correction-cases/knmi-metadata-corrections-piControl.json ./cmorMDfixer-test-data/test-set-01/CMIP6
 
 # Example running directly from the command line on the main node from another location:
-# ./cmorize/cmor-metadata-fixer/cmorMDfixer.py --verbose --dry --forceid --olist log-dir --npp 1 cmorize/cmor-metadata-fixer/metadata-correction-cases/knmi-metadata-corrections-piControl.json cmorize/cmor-metadata-fixer/cmorfixer-test-data/test-set-01
+# ./cmorize/cmor-metadata-fixer/cmorMDfixer.py --verbose --dry --forceid --olist log-dir --npp 1 cmorize/cmor-metadata-fixer/metadata-correction-cases/knmi-metadata-corrections-piControl.json cmorize/cmor-metadata-fixer/cmorMDfixer-test-data/test-set-01
 
 
  if [ "$#" -eq 1 ]; then
