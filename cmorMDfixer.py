@@ -34,7 +34,7 @@ def fix_file(path, write=True, keepid=False, forceid=False, metadata=None, add_a
             if (not hasattr(ds, attname) and add_attributes) or \
                     (hasattr(ds, attname) and str(getattr(ds, attname)) != str(attval)):
                 log.info("Setting metadata field %s to %s in %s" % (attname, attval, ds.filepath()))
-                log_overview_modified_attributes=log_overview_modified_attributes+'Set ' + attname + ' to ' + attval + '. '
+                log_overview_modified_attributes=log_overview_modified_attributes+'Set ' + attname + ' to ' + str(attval) + '. '
                 if write:
                     setattr(ds, attname, attval)
                 modified = True
