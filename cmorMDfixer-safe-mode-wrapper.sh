@@ -4,11 +4,11 @@
 # This script is a wrapper of cmorMDfixer. It only applies cmorMDfixer changes when in the dataset at least one error is found.
 # That means, if all files in the entire dataset are correct, then no tracking_id will be changed anywhere.
 #
-# This scripts needs two arguments:
+# This scripts needs three arguments:
 #
 # ${1} the first   argument is the number of cores (one node can be used).
 # ${2} the second  argument is path + filename of the metadata json file.
-# ${2} the third   argument is path of the directory with the cmorised data.
+# ${3} the third   argument is path of the directory with the cmorised data.
 #
 # Run this script without arguments for examples how to call this script.
 #
