@@ -58,11 +58,20 @@ if len(sys.argv) == 3:
      if verbose:
       print(line)
      exit
-   print("{} {}".format(cmip6_table, cmip6_variable))
+
+   if cmip6plus_table == None:
+    status='nomatch'
+   elif cmip6plus_table == cmip6_table and cmip6plus_variable == cmip6_variable:
+    status='equal'
+   else:
+    status='converted'
+
+   print("{} {} {}".format(cmip6_table, cmip6_variable, status))
 
 else:
    print()
    print(' This script needs two argument: table variable. E.g.:')
    print('  ', sys.argv[0], 'AP3hrPt tas')
    print('  ', sys.argv[0], 'APmon   hus19')
+   print('  ', sys.argv[0], 'LImon   tsn')
    print()
