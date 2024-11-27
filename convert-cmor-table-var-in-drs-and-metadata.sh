@@ -6,13 +6,13 @@
 # This scripts converts 
 #
 
- if [ "$#" -eq 0 ]; then
+ if [ "$#" -eq 1 ]; then
 
-  verbose=True
   verbose=False
+  data_dir=$1
 
   echo "" > ${0/.sh/.log}
-  for i in `find cmorMDfixer-test-data/test-set-01/CMIP6/ -name '*.nc'`; do
+  for i in `find ${data_dir} -name '*.nc'`; do
    # Sanity check on the `CMIP6` anchor point in the CMOR DRS:
    check_cmip6=`echo ${i} | cut -d/ -f3`
    if [ "${check_cmip6}" = "CMIP6" ]; then
@@ -67,7 +67,7 @@
 
  else
   echo
-  echo " Illegal number of arguments. Needs no arguments:"
-  echo "  $0"
+  echo " Illegal number of arguments. Needs one argument, the data dir with your cmorised CMIP6 data:"
+  echo "  $0 cmorMDfixer-test-data/test-set-01/CMIP6/"
   echo
  fi
