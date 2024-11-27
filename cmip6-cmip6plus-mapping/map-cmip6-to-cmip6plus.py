@@ -23,8 +23,6 @@ error_message   = '\n \033[91m' + 'Error:'   + '\033[0m'      # Red    error   m
 warning_message = '\n \033[93m' + 'Warning:' + '\033[0m'      # Yellow warning message
 
 
-#def lookup_cmip6plus_equivalent_of_cmip6
-
 if len(sys.argv) == 3:
 
    # In case the path contains the ~ character this will be expanded to the home dir:
