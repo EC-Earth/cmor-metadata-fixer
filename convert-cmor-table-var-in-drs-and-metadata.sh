@@ -23,9 +23,7 @@
     var=`echo ${i} | cut -d/ -f10`
 
     # Find the equivalent table and variable name and the convert status and catch the script output in an array:
-    cd cmip6-cmip6plus-mapping/
     converted_result=(`./map-cmip6-to-cmip6plus.py ${table} ${var}`)
-    cd ../
     # Put the three returned values into three separate variables:
     converted_table=${converted_result[0]}
     converted_var=${converted_result[1]}
