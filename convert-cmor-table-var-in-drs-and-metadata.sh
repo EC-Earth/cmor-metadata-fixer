@@ -13,8 +13,10 @@
   export data_dir=$1
   export log_file=${0/.sh/.log}
 
-  > ${log_file}
-  for i in `find ${data_dir} -name '*.nc'`; do
+
+  function convert_cmip6_to_cmip6plus() {
+   local i=$1
+
    # Sanity check on the `CMIP6` anchor point in the CMOR DRS:
    check_cmip6=`echo ${i} | cut -d/ -f3`
    if [ "${check_cmip6}" = "CMIP6" ]; then
@@ -82,6 +84,13 @@
    else
     echo " Abort $0 because the root dir CMIP6 is not at the expected location in the path, instead we found: ${check_cmip6} at the expected location."
    fi
+  }
+
+  export -f  convert_cmip6_to_cmip6plus
+
+  > ${log_file}
+  for i in `find ${data_dir} -name '*.nc'`; do
+   convert_cmip6_to_cmip6plus $i
   done
 
  else
