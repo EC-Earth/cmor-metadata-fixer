@@ -89,9 +89,20 @@
   export -f  convert_cmip6_to_cmip6plus
 
   > ${log_file}
-  for i in `find ${data_dir} -name '*.nc'`; do
-   convert_cmip6_to_cmip6plus $i
-  done
+
+  # Check whether gnu parallel is available:
+  if hash parallel 2>/dev/null; then
+   echo; echo " Run $0 in parallel mode."; echo
+   find ${data_dir} -name '*.nc' | parallel -I% convert_cmip6_to_cmip6plus %
+  else
+    echo; echo " Run $0 in sequential mode."; echo
+   for i in `find ${data_dir} -name '*.nc'`; do
+    convert_cmip6_to_cmip6plus $i
+   done
+  fi
+
+  # Guarantee same order:
+  sort ${log_file} > ${log_file/.log/-sorted.log}
 
  else
   echo
@@ -108,3 +119,6 @@
 # title = "EC-Earth3-ESM-1 output prepared for"   title = "EC-Earth3-ESM-1 output prepared for CMIP6Plus"   # Thus missing the CMIP6Plus at the end of the string.
 # data_specs_version = "6.5.0.0" ;        vs      :data_specs_version = "01.00.33" ;
 # "seaIce: LIM3 (same grid as ocean))" ;
+
+# Simple parallel - bash function example:
+#function message() { echo $1 ; }; export -f message; find cmorMDfixer-test-data/test-set-01 -type f | parallel -I% message %
