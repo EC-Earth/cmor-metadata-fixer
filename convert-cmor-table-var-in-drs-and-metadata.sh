@@ -14,15 +14,46 @@
   export log_file=${0/.sh/.log}
 
 
+  function determine_dir_level() {
+
+   local dir_path=$1
+
+   status='nomatch'
+   for i in {1..100}; do
+
+    subdir_name=`echo $dir_path | cut -d/ -f${i}`
+    if [ "$subdir_name" = "CMIP6" ]; then
+     echo ${i}
+     status='match'
+     break
+    fi
+
+   done
+   if [ "$status" = "nomatch" ]; then
+    echo ${status}
+   fi
+  }
+
+  export -f determine_dir_level
+
+
   function convert_cmip6_to_cmip6plus() {
    local i=$1
 
+   dir_level=$(determine_dir_level ${i})
+   if [ "${dir_level}" = "nomatch" ]; then
+    echo "Abort: can not find CMIP6 in given path: ${i}"
+    exit
+   fi
+
    # Sanity check on the `CMIP6` anchor point in the CMOR DRS:
-   check_cmip6=`echo ${i} | cut -d/ -f3`
+   check_cmip6=`echo ${i} | cut -d/ -f${dir_level}`
    if [ "${check_cmip6}" = "CMIP6" ]; then
     # Obtain the table and var name from the file path and name:
-    table=`echo ${i} | cut -d/ -f9`
-    var=`echo ${i} | cut -d/ -f10`
+    table_level="$(($dir_level+6))"
+    var_level="$(($dir_level+7))"
+    table=`echo ${i} | cut -d/ -f${table_level}`
+    var=`echo ${i} | cut -d/ -f${var_level}`
 
     # Find the equivalent table and variable name and the convert status and catch the script output in an array:
     converted_result=(`./map-cmip6-to-cmip6plus.py ${table} ${var}`)
@@ -86,7 +117,7 @@
    fi
   }
 
-  export -f  convert_cmip6_to_cmip6plus
+  export -f convert_cmip6_to_cmip6plus
 
   > ${log_file}
 
