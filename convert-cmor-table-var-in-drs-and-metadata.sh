@@ -154,6 +154,7 @@ if [ "$#" -eq 1 ]; then
       fi
     else
       echo " Abort $0 because the root dir CMIP6 is not at the expected location in the path, instead we found: ${check_cmip6} at the expected location."
+      echo " No conversion has been applied, the convert status is: ${status} for ${i}"
     fi
   }
 
