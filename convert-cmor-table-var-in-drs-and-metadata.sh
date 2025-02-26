@@ -11,7 +11,8 @@
   export duplicate_data=True
   export verbose=False
   export data_dir=$1
-  export log_file=${0/.sh/.log}
+  export log_dir=log-dir
+  export log_file=${log_dir}/${0/.sh/-001.log}
 
 
   function determine_dir_level() {
@@ -110,7 +111,7 @@
     echo "${imod}" >> ${log_file}
 
     else
-     echo " No action conversion has been taken, the convert status is: ${status}"
+     echo " No conversion has been applied, the convert status is: ${status} for ${i}"
     fi
    else
     echo " Abort $0 because the root dir CMIP6 is not at the expected location in the path, instead we found: ${check_cmip6} at the expected location."
@@ -119,6 +120,17 @@
 
   export -f convert_cmip6_to_cmip6plus
 
+  mkdir -p ${log_dir}
+  if [ -f ${log_file} ]; then
+  #for version_nr in {001..999}; do
+  # export log_file=${log_file/metadata-....sh/metadata-${version_nr}.log}
+  # if [ ! -f ${log_file} ]; then
+  #  break
+  # fi
+  #done
+   echo "Abort ${log_file} exists already."
+   exit 1
+  fi
   > ${log_file}
 
   # Check whether gnu parallel is available:
