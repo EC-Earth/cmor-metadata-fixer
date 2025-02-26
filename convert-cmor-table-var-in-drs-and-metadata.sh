@@ -119,8 +119,8 @@ if [ "$#" -eq 1 ]; then
           ncatted -a variable_id,global,m,c,${converted_var} -h ${imod}
         fi
 
-        # read metadata from config file
-        . $config
+        # Read metadata from config file:
+        source $config
         new_attrs=""
         new_attrs+=" -a table_id,global,o,c,'${converted_table}'"
         new_attrs+=" -a mip_era,global,o,c,'CMIP6Plus'"
