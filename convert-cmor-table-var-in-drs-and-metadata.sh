@@ -67,6 +67,38 @@ if [ "$#" -eq 1 ]; then
 
   export -f determine_dir_level
 
+  function get_new_attrs() {
+    # helper to trim leading and trailing spaces
+    trim() {
+      sed -e 's/^[[:space:]]*//g' -e 's/[[:space:]]*$//g'
+    }
+    # create sequence of ncatted commands from the config file
+    export new_attrs=''
+    # common updates
+    new_attrs+=" -a mip_era,global,o,c,'CMIP6Plus'"
+    new_attrs+=" -a parent_mip_era,global,o,c,'CMIP6Plus'"
+    new_attrs+=" -a further_info_url,global,d,,"
+    while read -r line; do
+      # remove comments and split
+      ll=${line%#*}
+      ll_lhs=$(echo $ll | cut -d = -f 1 | trim)
+      ll_rhs=$(echo $ll | cut -d = -f 2- | trim)
+      if [ "$ll_lhs" != "$ll_rhs" ]; then
+        # remove quotation marks
+        eval "rhs=$ll_rhs"
+        case $ll_lhs in
+        source_id)
+          export source_id=$rhs
+          new_attrs+=" -a title,global,o,c,'${source_id} output prepared for'"
+          ;;
+        *)
+          new_attrs+=" -a ${ll_lhs},global,o,c,'${rhs}'"
+          ;;
+        esac
+      fi
+    done <$config
+  }
+
   function convert_cmip6_to_cmip6plus() {
     local i=$1
 
@@ -75,6 +107,9 @@ if [ "$#" -eq 1 ]; then
       echo "Abort: can not find CMIP6 in given path: ${i}"
       exit
     fi
+
+    # load new attributes in a local variable
+    local new_attrs_local=$new_attrs
 
     # Sanity check on the `CMIP6` anchor point in the CMOR DRS:
     check_cmip6=$(echo ${i} | cut -d/ -f${dir_level})
@@ -115,37 +150,34 @@ if [ "$#" -eq 1 ]; then
           mv -f ${i} ${imod}
         fi
         if [ ${var} != ${converted_var} ]; then
-          ncrename -O -v ${var},${converted_var} ${imod}
-          ncatted -a variable_id,global,m,c,${converted_var} -h ${imod}
+          ncrename -O -h -v ${var},${converted_var} ${imod}
+          new_attrs_local+=" -a variable_id,global,m,c,${converted_var}"
         fi
 
-        # Read metadata from config file:
-        source $config
-        new_attrs=""
-        new_attrs+=" -a table_id,global,o,c,'${converted_table}'"
-        new_attrs+=" -a mip_era,global,o,c,'CMIP6Plus'"
-        new_attrs+=" -a parent_mip_era,global,o,c,'CMIP6Plus'"
-        new_attrs+=" -a title,global,o,c,'${source_id} output prepared for'"
-        new_attrs+=" -a license,global,o,c,'${license}'"
-        new_attrs+=" -a further_info_url,global,d,,"
-        new_attrs+=" -a institution,global,o,c,'${institution}'"
-        new_attrs+=" -a comment,global,m,c,'${comment}'"
-        new_attrs+=" -a description,global,o,c,'${description}'"
+        # add attrs to list
+        new_attrs_local+=" -a table_id,global,o,c,'${converted_table}'"
+        case $experiment_id in
+        esm-piControl)
+          experiment="pre-industrial control simulation with preindustrial CO2 emissions defined (CO2 emission-driven)"
+          description="DECK: control (emission-driven)"
+          ;;
+        esm-hist)
+          experiment="all-forcing simulation of the recent past with atmospheric CO2 concentration calculated (CO2 emission-driven)"
+          description="CMIP6 historical (CO2 emission-driven)"
+          ;;
+        *)
+          echo "*** ERROR: settings for experiment $experiment_id not defined in $config ***"
+          exit -1
+          ;;
+        esac
+        new_attrs_local+=" -a description,global,o,c,'${description}'"
+        new_attrs_local+=" -a experiment,global,o,c,'${experiment}'"
 
-        new_attrs+=" -a experiment,global,o,c,'${experiment}'"
-        new_attrs+=" -a experiment_id,global,o,c,'${experiment_id}'"
-        new_attrs+=" -a institution_id,global,o,c,'${institution_id}'"
-        new_attrs+=" -a parent_source_id,global,o,c,'${parent_source_id}'"
-        new_attrs+=" -a parent_experiment_id,global,o,c,'${parent_experiment_id}'"
-
-        new_attrs+=" -a source,global,o,c,'${source}'"
-        new_attrs+=" -a source_id,global,o,c,'${source_id}'"
-
-        # prepend to history attribute
-        new_attrs+=" -a history,global,p,c,'$(date -u +%FT%XZ) ; ${history_addition}'"
+        # prepend history attribute
+        new_attrs_local+=" -a history,global,p,c,'$(date -u +%FT%XZ) ; The cmorMDfixer CMIP6 => CMIP6Plus convertscript has been applied.;\n'"
 
         # "eval" is needed here to avoid problems with whitespace in metadata
-        eval "ncatted ${new_attrs} -h -O ${imod}"
+        eval "ncatted ${new_attrs_local} -h -O ${imod}"
 
         echo "${imod}" >>${log_file}
 
@@ -161,6 +193,9 @@ if [ "$#" -eq 1 ]; then
   export -f convert_cmip6_to_cmip6plus
 
   >${log_file}
+
+  # load list with new attributes
+  get_new_attrs
 
   # Check whether gnu parallel is available:
   if hash parallel 2>/dev/null; then
