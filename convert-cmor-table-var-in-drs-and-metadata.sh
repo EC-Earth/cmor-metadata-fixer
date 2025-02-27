@@ -23,16 +23,16 @@ export duplicate_data=True
 export verbose=False
 export log_file=${0/.sh/.log}
 export config='convert-ecearth.cfg'
-export overwrite=false
+export overwrite=False
 
 option_list=""
 while getopts "hdvol:c:" opt; do
-  option_list+=" -"$opt
+  option_list+=" -"$opt" "$OPTARG
   case $opt in
   h) usage ;;
   d) duplicate_data=False ;;
   v) verbose=True ;;
-  o) overwrite=true ;;
+  o) overwrite=True ;;
   l) log_file=$OPTARG ;;
   c) config=$OPTARG ;;
   *) usage ;;
@@ -44,8 +44,8 @@ export data_dir=$1
 
 if [ ${verbose} = True ]; then
    echo "duplicate_data = $duplicate_data"
-   echo "overwrite = $overwrite"
    echo "verbose = $verbose"
+   echo "overwrite = $overwrite"
    echo "log_file = $log_file"
    echo "config_file = $config"
    echo "data_dir = $data_dir"
@@ -143,7 +143,7 @@ if [ "$#" -eq 1 ]; then
 
         # check if file already exists
         # if it exists force cp/mv only if -o has been set
-        if [ ! -f $imod ] || $overwrite; then
+        if [ ! -f $imod ] || [ $overwrite = True ]; then
           mkdir -p ${imod%/*}
           if [ ${duplicate_data} = True ]; then
             # Duplicate data to CMIP6plus DRS based directory for conversion to CMIP6plus:
