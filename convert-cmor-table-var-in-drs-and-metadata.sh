@@ -7,10 +7,11 @@
 #
 
 usage() {
-  echo "Usage: $0 [-h] [-d] [-v] [-o] [-l log_file] [-c config_file] DIR"
+  echo "Usage: $0 [-h] [-d] [-v] [-p output_path] [-o] [-l log_file] [-c config_file] DIR"
   echo "    -h : show help message"
   echo "    -d : don't duplicate data (default: copy data)"
   echo "    -v : switch on verbose (default: off)"
+  echo "    -p : specify an output path (default: ${output_path})"
   echo "    -o : overwrite existing files (default: ${overwrite})"
   echo "    -l : log_file (default: ${log_file})"
   echo "    -c : configuration file (default: ${config})"
@@ -23,15 +24,17 @@ export duplicate_data=True
 export verbose=False
 export log_file=${0/.sh/.log}
 export config='convert-ecearth.cfg'
+export output_path=False
 export overwrite=False
 
 option_list=""
-while getopts "hdvol:c:" opt; do
+while getopts "hdvp:ol:c:" opt; do
   option_list+=" -"$opt" "$OPTARG
   case $opt in
   h) usage ;;
   d) duplicate_data=False ;;
   v) verbose=True ;;
+  p) output_path=$OPTARG ;;
   o) overwrite=True ;;
   l) log_file=$OPTARG ;;
   c) config=$OPTARG ;;
@@ -43,12 +46,14 @@ shift $((OPTIND - 1))
 export data_dir=$1
 
 if [ ${verbose} = True ]; then
-   echo "duplicate_data = $duplicate_data"
-   echo "verbose = $verbose"
-   echo "overwrite = $overwrite"
-   echo "log_file = $log_file"
-   echo "config_file = $config"
-   echo "data_dir = $data_dir"
+   echo
+   echo " duplicate_data = $duplicate_data"
+   echo " verbose = $verbose"
+   echo " output_path = $output_path"
+   echo " overwrite = $overwrite"
+   echo " log_file = $log_file"
+   echo " config_file = $config"
+   echo " data_dir = $data_dir"
 fi
 
 if [ "$#" -eq 1 ]; then
@@ -141,6 +146,15 @@ if [ "$#" -eq 1 ]; then
       if [ "${status}" != "nomatch" ]; then
         imod=$(echo ${i} | sed -e "s/${table}/${converted_table}/g" -e "s/${var}/${converted_var}/g" -e "s/CMIP6/CMIP6Plus/g")
 
+        if [ "${output_path}" != False ]; then
+         pre_path_orig=$(echo ${imod} | cut -d/ -f1-$((${dir_level}-1)))
+         pre_path_new=${output_path}
+         if [ ${verbose} = True ]; then
+          echo " The pre path has been changed for the output from $pre_path_orig => $pre_path_new"
+         fi
+         imod=${imod/$pre_path_orig/$pre_path_new}
+        fi
+
         # check if file already exists
         # if it exists force cp/mv only if -o has been set
         if [ ! -f $imod ] || [ $overwrite = True ]; then
@@ -169,7 +183,7 @@ if [ "$#" -eq 1 ]; then
             description="CMIP6 historical (CO2 emission-driven)"
             ;;
           *)
-            echo "*** ERROR: settings for experiment $experiment_id not defined yet ***"
+            echo " *** ERROR: settings for experiment $experiment_id not defined yet ***"
             exit -1
             ;;
           esac
@@ -209,9 +223,9 @@ if [ "$#" -eq 1 ]; then
   else
     if [ ${verbose} = True ]; then
        echo
-       echo "The CMIP6 directroy is at directory level: ${check}"
-       echo "Found CMIP6 directory ${cmip6_path}"
-       echo "Saving converted data in $(echo ${data_dir} | cut -d/ -f1-$((${check}-1)))/CMIP6Plus"
+       echo " The CMIP6 directroy is at directory level: ${check}"
+       echo " Found CMIP6 directory ${cmip6_path}"
+       echo " Saving converted data in $(echo ${data_dir} | cut -d/ -f1-$((${check}-1)))/CMIP6Plus"
     fi
   fi
 
