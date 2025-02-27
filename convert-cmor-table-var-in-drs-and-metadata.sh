@@ -244,14 +244,3 @@ else
   echo "  $0 cmorMDfixer-test-data/test-set-01/CMIP6/"
   echo
 fi
-
-# Compare and evaluate this script with:
-# ./convert-cmor-table-var-in-drs-and-metadata.sh new-data/hpc2020/CMIP6/; ncdump -h new-data/hpc2020/CMIP6Plus/CMIP/EC-Earth-Consortium/EC-Earth3-ESM-1/esm-hist/r1i1p1f1/OPmon/tos/gn/v20250217/tos_OPmon_EC-Earth3-ESM-1_esm-hist_r1i1p1f1_gn_199001-199012.nc > tos_OPmon_EC-Earth3-ESM-1_esm-hist_r1i1p1f1_gn-cmip6Plus-converted.txt; sort tos_OPmon_EC-Earth3-ESM-1_esm-hist_r1i1p1f1_gn-cmip6Plus-converted.txt > tos_OPmon_EC-Earth3-ESM-1_esm-hist_r1i1p1f1_gn-cmip6Plus-converted-sorted.txt
-
-# cmorised CMIP6Plus                              converted CMIP6Plus
-# title = "EC-Earth3-ESM-1 output prepared for"   title = "EC-Earth3-ESM-1 output prepared for CMIP6Plus"   # Thus missing the CMIP6Plus at the end of the string.
-# data_specs_version = "6.5.0.0" ;        vs      :data_specs_version = "01.00.33" ;
-# "seaIce: LIM3 (same grid as ocean))" ;
-
-# Simple parallel - bash function example:
-#function message() { echo $1 ; }; export -f message; find cmorMDfixer-test-data/test-set-01 -type f | parallel -I% message %
