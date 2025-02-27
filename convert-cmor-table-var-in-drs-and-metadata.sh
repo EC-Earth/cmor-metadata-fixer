@@ -136,7 +136,7 @@ if [ "$#" -eq 1 ]; then
         echo
       fi
 
-      if [ "${status}" = "converted" ]; then
+      if [ "${status}" != "nomatch" ]; then
         imod=$(echo ${i} | sed -e "s/${table}/${converted_table}/g" -e "s/${var}/${converted_var}/g" -e "s/CMIP6/CMIP6Plus/g")
 
         # check if file already exists
@@ -167,7 +167,7 @@ if [ "$#" -eq 1 ]; then
             description="CMIP6 historical (CO2 emission-driven)"
             ;;
           *)
-            echo "*** ERROR: settings for experiment $experiment_id not defined in $config ***"
+            echo "*** ERROR: settings for experiment $experiment_id not defined yet ***"
             exit -1
             ;;
           esac
