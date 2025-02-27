@@ -5,10 +5,11 @@
 #  Create the cmorMDfixer environment:
 #    activatemamba                               # alias activatemamba='source ${mambapath}/etc/profile.d/conda.sh'
 #    mamba update -y --name base mamba           # For updating mamba itself
-#    mamba env create -f environment.yml         # Create the cmorMDfixer environment
+#    mamba env create -y -f environment.yml      # Create the cmorMDfixer environment
+#    RUN yes 'will cite' | parallel --citation   # Handling the citation request from gnu parallel
 #  Basic tests:
 #   which python                                 # ${mambapath}/envs/cmorMDfixer/bin/python
-#   python --version                             # Python 3.12.5
+#   python --version                             # Python 3.13.2
 #   ./cmorMDfixer.py -h
 
 name: cmorMDfixer
@@ -17,3 +18,5 @@ channels:
 - nodefaults
 dependencies:
 - netcdf4
+- nco
+- parallel
