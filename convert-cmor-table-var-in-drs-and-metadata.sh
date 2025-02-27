@@ -7,13 +7,14 @@
 #
 
 usage() {
-  echo "Usage: $0 [-h] [-d] [-v] [-l log_file] [-c config_file] dir"
+  echo "Usage: $0 [-h] [-d] [-v] [-o] [-l log_file] [-c config_file] DIR"
   echo "    -h : show help message"
-  echo "    -d : don't duplicate data (default: duplicate data)"
-  echo "    -v : verbose (default: false)"
-  echo "    -l : log_file (default: ${0/.sh/.log})"
-  echo "    -c : configuration file with new metadata (default: convert-config.cfg)"
-  echo "    dir : directory with CMIP6 data to be converted"
+  echo "    -d : don't duplicate data (default: copy data)"
+  echo "    -v : switch on verbose (default: off)"
+  echo "    -o : overwrite existing files (default: ${overwrite})"
+  echo "    -l : log_file (default: ${log_file})"
+  echo "    -c : configuration file (default: ${config})"
+  echo "    DIR : path to CMIP6 directory"
   exit -1
 }
 
@@ -21,13 +22,15 @@ usage() {
 export duplicate_data=True
 export verbose=False
 export log_file=${0/.sh/.log}
-export config='convert-config.cfg'
+export config='convert-ecearth.cfg'
+export overwrite=false
 
-while getopts "hdvl:c:" opt; do
+while getopts "hdvol:c:" opt; do
   case $opt in
   h) usage ;;
   d) duplicate_data=False ;;
   v) verbose=True ;;
+  o) overwrite=true ;;
   l) log_file=$OPTARG ;;
   c) config=$OPTARG ;;
   *) usage ;;
@@ -48,11 +51,13 @@ if [ "$#" -eq 1 ]; then
   function determine_dir_level() {
 
     local dir_path=$1
+    cmip6_path=''
 
     status='nomatch'
     for i in {1..100}; do
 
       subdir_name=$(echo $dir_path | cut -d/ -f${i})
+      cmip6_path+="${subdir_name}/"
       if [ "$subdir_name" = "CMIP6" ]; then
         echo ${i}
         status='match'
@@ -86,15 +91,7 @@ if [ "$#" -eq 1 ]; then
       if [ "$ll_lhs" != "$ll_rhs" ]; then
         # remove quotation marks
         eval "rhs=$ll_rhs"
-        case $ll_lhs in
-        source_id)
-          export source_id=$rhs
-          new_attrs+=" -a title,global,o,c,'${source_id} output prepared for'"
-          ;;
-        *)
-          new_attrs+=" -a ${ll_lhs},global,o,c,'${rhs}'"
-          ;;
-        esac
+        new_attrs+=" -a ${ll_lhs},global,o,c,'${rhs}'"
       fi
     done <$config
   }
@@ -141,45 +138,52 @@ if [ "$#" -eq 1 ]; then
 
       if [ "${status}" = "converted" ]; then
         imod=$(echo ${i} | sed -e "s/${table}/${converted_table}/g" -e "s/${var}/${converted_var}/g" -e "s/CMIP6/CMIP6Plus/g")
-        mkdir -p ${imod%/*}
-        if [ ${duplicate_data} = True ]; then
-          # Duplicate data to CMIP6plus DRS based directory for conversion to CMIP6plus:
-          rsync -a ${i} ${imod}
+
+        # check if file already exists
+        # if it exists force cp/mv only if -o has been set
+        if [ ! -f $imod ] || $overwrite; then
+          mkdir -p ${imod%/*}
+          if [ ${duplicate_data} = True ]; then
+            # Duplicate data to CMIP6plus DRS based directory for conversion to CMIP6plus:
+            rsync -a ${i} ${imod}
+          else
+            # Move data to CMIP6plus DRS based directory for conversion to CMIP6plus:
+            mv -f ${i} ${imod}
+          fi
+          if [ ${var} != ${converted_var} ]; then
+            ncrename -O -h -v ${var},${converted_var} ${imod}
+            new_attrs_local+=" -a variable_id,global,m,c,${converted_var}"
+          fi
+
+          # add attrs to list
+          new_attrs_local+=" -a table_id,global,o,c,'${converted_table}'"
+          case $experiment_id in
+          esm-piControl)
+            experiment="pre-industrial control simulation with preindustrial CO2 emissions defined (CO2 emission-driven)"
+            description="DECK: control (emission-driven)"
+            ;;
+          esm-hist)
+            experiment="all-forcing simulation of the recent past with atmospheric CO2 concentration calculated (CO2 emission-driven)"
+            description="CMIP6 historical (CO2 emission-driven)"
+            ;;
+          *)
+            echo "*** ERROR: settings for experiment $experiment_id not defined in $config ***"
+            exit -1
+            ;;
+          esac
+          new_attrs_local+=" -a description,global,o,c,'${description}'"
+          new_attrs_local+=" -a experiment,global,o,c,'${experiment}'"
+
+          # prepend history attribute
+          new_attrs_local+=" -a history,global,p,c,'$(date -u +%FT%XZ) ; The cmorMDfixer CMIP6 => CMIP6Plus convertscript has been applied.;\n'"
+
+          # "eval" is needed here to avoid problems with whitespace in metadata
+          eval "ncatted ${new_attrs_local} -h -O ${imod}"
+
+          echo "${imod}" >>${log_file}
         else
-          # Move data to CMIP6plus DRS based directory for conversion to CMIP6plus:
-          mv -f ${i} ${imod}
+          echo "${imod} already exists and overwrite=$overwrite" | tee -a ${log_file}
         fi
-        if [ ${var} != ${converted_var} ]; then
-          ncrename -O -h -v ${var},${converted_var} ${imod}
-          new_attrs_local+=" -a variable_id,global,m,c,${converted_var}"
-        fi
-
-        # add attrs to list
-        new_attrs_local+=" -a table_id,global,o,c,'${converted_table}'"
-        case $experiment_id in
-        esm-piControl)
-          experiment="pre-industrial control simulation with preindustrial CO2 emissions defined (CO2 emission-driven)"
-          description="DECK: control (emission-driven)"
-          ;;
-        esm-hist)
-          experiment="all-forcing simulation of the recent past with atmospheric CO2 concentration calculated (CO2 emission-driven)"
-          description="CMIP6 historical (CO2 emission-driven)"
-          ;;
-        *)
-          echo "*** ERROR: settings for experiment $experiment_id not defined in $config ***"
-          exit -1
-          ;;
-        esac
-        new_attrs_local+=" -a description,global,o,c,'${description}'"
-        new_attrs_local+=" -a experiment,global,o,c,'${experiment}'"
-
-        # prepend history attribute
-        new_attrs_local+=" -a history,global,p,c,'$(date -u +%FT%XZ) ; The cmorMDfixer CMIP6 => CMIP6Plus convertscript has been applied.;\n'"
-
-        # "eval" is needed here to avoid problems with whitespace in metadata
-        eval "ncatted ${new_attrs_local} -h -O ${imod}"
-
-        echo "${imod}" >>${log_file}
 
       else
         echo " No action conversion has been taken, the convert status is: ${status}"
@@ -192,7 +196,18 @@ if [ "$#" -eq 1 ]; then
 
   export -f convert_cmip6_to_cmip6plus
 
+  # Clean log_file
   >${log_file}
+
+  # First sanity check
+  determine_dir_level $data_dir
+  if [ "$status" = "match" ]; then
+    echo "Found CMIP6 directory ${cmip6_path}"
+    echo "Saving converted data in $(dirname ${cmip6_path})/CMIP6Plus"
+  else
+    echo "Abort : no path to CMIP6 directory in ${data_dir}"
+    exit -1
+  fi
 
   # load list with new attributes
   get_new_attrs
