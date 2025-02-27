@@ -25,7 +25,9 @@ export log_file=${0/.sh/.log}
 export config='convert-ecearth.cfg'
 export overwrite=false
 
+option_list=""
 while getopts "hdvol:c:" opt; do
+  option_list+=" -"$opt
   case $opt in
   h) usage ;;
   d) duplicate_data=False ;;
@@ -40,11 +42,14 @@ shift $((OPTIND - 1))
 
 export data_dir=$1
 
-echo "duplicate_data = $duplicate_data"
-echo "verbose = $verbose"
-echo "log_file = $log_file"
-echo "config_file = $config"
-echo "data_dir = $data_dir"
+if [ ${verbose} = True ]; then
+   echo "duplicate_data = $duplicate_data"
+   echo "overwrite = $overwrite"
+   echo "verbose = $verbose"
+   echo "log_file = $log_file"
+   echo "config_file = $config"
+   echo "data_dir = $data_dir"
+fi
 
 if [ "$#" -eq 1 ]; then
 
@@ -129,10 +134,7 @@ if [ "$#" -eq 1 ]; then
 
       if [ ${verbose} = True ]; then
         echo
-        echo " Lookup CMIP6Plus equivalent of the CMIP6 ${table} ${var}:"
-        echo "  ${status}"
-        echo "  ${converted_table}"
-        echo "  ${converted_var}"
+        echo " Lookup CMIP6Plus equivalent of the CMIP6 ${table} ${var}: ${converted_table} ${converted_var} ${status}"
         echo
       fi
 
@@ -200,13 +202,17 @@ if [ "$#" -eq 1 ]; then
   >${log_file}
 
   # First sanity check
-  determine_dir_level $data_dir
-  if [ "$status" = "match" ]; then
-    echo "Found CMIP6 directory ${cmip6_path}"
-    echo "Saving converted data in $(dirname ${cmip6_path})/CMIP6Plus"
-  else
+  check=$(determine_dir_level $data_dir)
+  if [ "$check" = "nomatch" ]; then
     echo "Abort : no path to CMIP6 directory in ${data_dir}"
     exit -1
+  else
+    if [ ${verbose} = True ]; then
+       echo
+       echo "The CMIP6 directroy is at directory level: ${check}"
+       echo "Found CMIP6 directory ${cmip6_path}"
+       echo "Saving converted data in $(echo ${data_dir} | cut -d/ -f1-$((${check}-1)))/CMIP6Plus"
+    fi
   fi
 
   # load list with new attributes
@@ -215,12 +221,14 @@ if [ "$#" -eq 1 ]; then
   # Check whether gnu parallel is available:
   if hash parallel 2>/dev/null; then
     echo
-    echo " Run $0 in parallel mode."
+    echo " Run in parallel mode:"
+    echo "  $0$option_list $@"
     echo
     find ${data_dir} -name '*.nc' | parallel -I% convert_cmip6_to_cmip6plus %
   else
     echo
-    echo " Run $0 in sequential mode."
+    echo " Run in sequential mode."
+    echo "  $0$option_list $@"
     echo
     for i in $(find ${data_dir} -name '*.nc'); do
       convert_cmip6_to_cmip6plus $i
