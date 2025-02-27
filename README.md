@@ -143,3 +143,38 @@ In order to see whether there is more than one version in your data:
 If so (this happens when during running the script the date changed because you crossed midnight), you need to set one version (you can choose what you want, but it should be a different and later date than the one which was previously published). One can set the date for instance to September 20 2024 by:
 ```shell
 ./versions.sh -v v20240920 -m CMIP6/
+```
+
+## 4. Convert an existing CMIP6 directory tree to CMIP6Plus
+
+The ``convert-cmor-table-var-in-drs-and-metadata.sh`` script changes variable and table names to CMIP6Plus standards, updates attributes and adjusts the DRS.
+
+```shell
+Usage: ./convert-cmor-table-var-in-drs-and-metadata.sh [-h] [-d] [-v] [-o] [-l log_file] [-c config_file] DIR
+    -h : show help message
+    -d : don't duplicate data (default: copy data)
+    -v : switch on verbose (default: off)
+    -o : overwrite existing files (default: false)
+    -l : log_file (default: ./convert-cmor-table-var-in-drs-and-metadata.log)
+    -c : configuration file (default: convert-ecearth.cfg)
+    DIR : path to CMIP6 directory
+```
+
+The configuration file holds a collection of all (global) attributes that should be updated when converting CMIP6 to CMIP6Plus. The example config file (convert-ecearth.cfg) includes the changes for EC-Earth3-ESM-1. Copy this file and edit settings for your model, then launch the conversion with ``-c your_config_file.cfg``
+
+Some attributes are updated automatically and don't need to be included in the config file:
+- mip_era
+- parent_mip_era
+- table_id
+- variable_id
+- experiment
+- description (new attribute for CMIP6Plus)
+- further_info_url (will be deleted)
+- history
+
+Without the ``-d`` option the script copies data from an existing CMIP6 to a CMIP6Plus directory. With ``-d`` the files are moved instad, no backup. Use with caution!
+
+Datasets in the CMIP6 directory that cannot be mapped to CMIP6Plus datasets will be left untouched.
+
+
+
