@@ -13,7 +13,7 @@ usage() {
   echo "    -v : switch on verbose (default: off)"
   echo "    -p : specify an output path (default: ${output_path})"
   echo "    -o : overwrite existing files (default: ${overwrite})"
-  echo "    -s : switch to another model (default: ${switch_model})"
+  echo "    -s : switch to another model (default: ${switch_model}), only affects unregistered cases"
   echo "    -l : log_file (default: ${log_file})"
   echo "    -c : configuration file (default: ${config})"
   echo "    DIR : path to CMIP6 directory"
@@ -176,11 +176,11 @@ if [ "$#" -eq 1 ]; then
           if [ "${error_in_cv_request}" = "ERROR:" ]; then
            echo " The ${switch_model} specified with the -s option is not registred, therefore reject this switch."
           else
-           echo " Switch model (due to -s option) from ${source_id} to ${switch_model}."
+           echo " Switch model name (due to -s option) from ${source_id} to ${switch_model}."
            # Replace all occurences:
            imod=${imod//${source_id}/${switch_model}}
            source_id=${switch_model}
-           if [ ${verbose} = True ]; then echo "post ${imod}"; fi
+           if [ ${verbose} = True ]; then echo " Switch model name: ${imod}"; fi
            # In case with -s also an unregistered source_id is specified, the attribute check below will catch that.
           fi
         #else
