@@ -248,7 +248,7 @@ if [ "$#" -eq 1 ]; then
         fi
 
       else
-        echo " No action conversion has been taken, the convert status is: ${status}"
+        echo " No conversion for ${table} ${var} has been taken, the convert status is: ${status}"
       fi
     else
       echo " Abort $0 because the root dir CMIP6 is not at the expected location in the path, instead we found: ${check_cmip6} at the expected location."
