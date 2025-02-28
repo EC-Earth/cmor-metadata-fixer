@@ -190,6 +190,12 @@ if [ "$#" -eq 1 ]; then
           title="${source_id} output prepared for"            # The CMIP6Plus tables have an truncation error at the end of the title, see https://github.com/PCMDI/cmor/issues/776
          #title="${source_id} output prepared for CMIP6Plus"  # Actual correct case
 
+          # Catch errors for cases in which a CMIP6 configuration or experiment is encountered which does not have an CMIP6Plus registration:
+          request_cv_item_error="ERROR: ${source_id} is not an valid ESM source_id."
+          if [ "${experiment}" = "${request_cv_item_error}" ]; then
+           echo -e "\e[1;31m Error:\e[0m"" Not in CMIP6Plus: ${request_cv_item_error} The experiment, institution, source, license & description attributes contain an error for $imod"
+          fi
+
           new_attrs_local+=" -a table_id,global,o,c,'${converted_table}'"
           new_attrs_local+=" -a description,global,o,c,'${description}'"
           new_attrs_local+=" -a experiment,global,o,c,'${experiment}'"
