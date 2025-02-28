@@ -50,14 +50,14 @@ def main():
        # Check whether arguments are known within the CV:
        esms = list(cv_content['CV']['source_id'].keys())
        if specified_source_id not in esms:
-          print('\n ERROR: {} is not an valid ESM source_id.\n'.format(specified_source_id))
-         #print('{} {} is not an valid ESM source_id.\n'.format(error_message, specified_source_id))
+          print('\n ERROR: {} is not a valid ESM source_id.\n'.format(specified_source_id))
+         #print('{} {} is not a valid ESM source_id.\n'.format(error_message, specified_source_id))
           sys.exit()
 
        experiments = list(cv_content['CV']['experiment_id'].keys())
        if specified_experiment not in experiments:
-          print('\n ERROR: {} is not an valid experiment.\n'.format(specified_experiment))
-         #print('{} {} is not an valid experiment.\n'.format(error_message, specified_experiment))
+          print('\n ERROR: {} is not a valid experiment.\n'.format(specified_experiment))
+         #print('{} {} is not a valid experiment.\n'.format(error_message, specified_experiment))
           sys.exit()
 
 
@@ -108,8 +108,8 @@ def main():
 
        else:
         content_requested_cv_item = 'nomatch'
-       #print('\n ERROR: {} is not an valid requested_cv_item.\n'.format(requested_cv_item))
-       #print('{} {} is not an valid requested_cv_item.\n'.format(error_message, requested_cv_item))
+       #print('\n ERROR: {} is not a valid requested_cv_item.\n'.format(requested_cv_item))
+       #print('{} {} is not a valid requested_cv_item.\n'.format(error_message, requested_cv_item))
 
        print('{}'.format(content_requested_cv_item))
 

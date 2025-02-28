@@ -7,12 +7,13 @@
 #
 
 usage() {
-  echo "Usage: $0 [-h] [-d] [-v] [-p output_path] [-o] [-l log_file] [-c config_file] DIR"
+  echo "Usage: $0 [-h] [-d] [-v] [-p output_path] [-o] [-s switch_model] [-l log_file] [-c config_file] DIR"
   echo "    -h : show help message"
   echo "    -d : don't duplicate data (default: copy data)"
   echo "    -v : switch on verbose (default: off)"
   echo "    -p : specify an output path (default: ${output_path})"
   echo "    -o : overwrite existing files (default: ${overwrite})"
+  echo "    -s : switch to another model (default: ${switch_model})"
   echo "    -l : log_file (default: ${log_file})"
   echo "    -c : configuration file (default: ${config})"
   echo "    DIR : path to CMIP6 directory"
@@ -26,9 +27,10 @@ export log_file=${0/.sh/.log}
 export config='convert-ecearth.cfg'
 export output_path=False
 export overwrite=False
+export switch_model=False
 
 option_list=""
-while getopts "hdvp:ol:c:" opt; do
+while getopts "hdvp:os:l:c:" opt; do
   option_list+=" -"$opt" "$OPTARG
   case $opt in
   h) usage ;;
@@ -36,6 +38,7 @@ while getopts "hdvp:ol:c:" opt; do
   v) verbose=True ;;
   p) output_path=$OPTARG ;;
   o) overwrite=True ;;
+  s) switch_model=$OPTARG ;;
   l) log_file=$OPTARG ;;
   c) config=$OPTARG ;;
   *) usage ;;
@@ -51,6 +54,7 @@ if [ ${verbose} = True ]; then
    echo " verbose = $verbose"
    echo " output_path = $output_path"
    echo " overwrite = $overwrite"
+   echo " switch_model = $switch_model"
    echo " log_file = $log_file"
    echo " config_file = $config"
    echo " data_dir = $data_dir"
@@ -128,8 +132,6 @@ if [ "$#" -eq 1 ]; then
       # Obtain the table and var name from the file path and name:
       table=$(echo ${i} | cut -d/ -f $((dir_level + 6)))
       var=$(echo ${i} | cut -d/ -f $((dir_level + 7)))
-      experiment_id=$(echo ${i} | cut -d/ -f $((dir_level + 4)))
-      source_id=$(echo ${i} | cut -d/ -f $((dir_level + 3)))
 
       # Find the equivalent table and variable name and the convert status and catch the script output in an array:
       converted_result=($(./map-cmip6-to-cmip6plus.py ${table} ${var}))
@@ -156,6 +158,37 @@ if [ "$#" -eq 1 ]; then
          imod=${imod/$pre_path_orig/$pre_path_new}
         fi
 
+        # Obtain the experiment_id & source_id name from the file path and name:
+        experiment_id=$(echo ${i} | cut -d/ -f $((dir_level + 4)))
+        source_id=$(echo ${i} | cut -d/ -f $((dir_level + 3)))
+
+        # Check whether a model has a CMIP6Plus registration:
+        cv_experiment=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_experiment) | cut -d = -f 2- | trim)
+        error_in_cv_request=${cv_experiment:0:6}
+        if [ "${error_in_cv_request}" = "ERROR:" ]; then
+
+         # Only allowed in case a model is not registered, to prevent other unintended cases.
+         if [ "${switch_model}" != False ]; then
+
+          # Check whether the model specified with the -s option has a CMIP6Plus registration:
+          cv_experiment=$(echo $(./request-cv-item.py ${switch_model} ${experiment_id} cv_experiment) | cut -d = -f 2- | trim)
+          error_in_cv_request=${cv_experiment:0:6}
+          if [ "${error_in_cv_request}" = "ERROR:" ]; then
+           echo " The ${switch_model} specified with the -s option is not registred, therefore reject this switch."
+          else
+           echo " Switch model (due to -s option) from ${source_id} to ${switch_model}."
+           # Replace all occurences:
+           imod=${imod//${source_id}/${switch_model}}
+           source_id=${switch_model}
+           if [ ${verbose} = True ]; then echo "post ${imod}"; fi
+           # In case with -s also an unregistered source_id is specified, the attribute check below will catch that.
+          fi
+        #else
+        # echo -e "\e[1;31m Error:\e[0m"" ${cv_experiment:5:-1} for CMIP6Plus."
+         fi
+        fi
+
+
         # check if file already exists
         # if it exists force cp/mv only if -o has been set
         if [ ! -f $imod ] || [ $overwrite = True ]; then
@@ -173,36 +206,35 @@ if [ "$#" -eq 1 ]; then
           fi
 
           # add attrs to list
-          license=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_license) | cut -d = -f 2- | trim)
-          description=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_description) | cut -d = -f 2- | trim)
-          experiment=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_experiment) | cut -d = -f 2- | trim)
+          cv_license=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_license) | cut -d = -f 2- | trim)
+          cv_description=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_description) | cut -d = -f 2- | trim)
+          cv_experiment=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_experiment) | cut -d = -f 2- | trim)
 
-          institution=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_institution_id) | cut -d = -f 2- | trim)
-          source=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_esm_source) | cut -d = -f 2- | trim)
+          cv_institution=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_institution_id) | cut -d = -f 2- | trim)
+          cv_source=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_esm_source) | cut -d = -f 2- | trim)
           # Stupid fixes for newline & single spaces in source text content (probably leaving this differences won't stop publishing):
           for component in {'aerosol','atmos','atmosChem','land','landIce','ocean','ocnBgchem','seaIce'}; do 
-           source=${source/${component}/"\n${component}"}
+           cv_source=${cv_source/${component}/"\n${component}"}
           done
-          source=$(echo "$source" | sed -e 's/ \\n/\\n/g')
-          source=$(echo "$source" | sed -e 's/:\\n/: \\n/g')
-          source=$(echo "$source" | sed -e 's/surroundings)\\n/surroundings) \\n/g')  # dirty adhoc fix for identical result
+          cv_source=$(echo "${cv_source}" | sed -e 's/ \\n/\\n/g')
+          cv_source=$(echo "${cv_source}" | sed -e 's/:\\n/: \\n/g')
+          cv_source=$(echo "${cv_source}" | sed -e 's/surroundings)\\n/surroundings) \\n/g')  # dirty adhoc fix for identical result
 
-          title="${source_id} output prepared for"            # The CMIP6Plus tables have an truncation error at the end of the title, see https://github.com/PCMDI/cmor/issues/776
-         #title="${source_id} output prepared for CMIP6Plus"  # Actual correct case
+          cv_title="${source_id} output prepared for"            # The CMIP6Plus tables have an truncation error at the end of the title, see https://github.com/PCMDI/cmor/issues/776
+         #cv_title="${source_id} output prepared for CMIP6Plus"  # Actual correct case
 
           # Catch errors for cases in which a CMIP6 configuration or experiment is encountered which does not have an CMIP6Plus registration:
-          request_cv_item_error="ERROR: ${source_id} is not an valid ESM source_id."
-          if [ "${experiment}" = "${request_cv_item_error}" ]; then
-           echo -e "\e[1;31m Error:\e[0m"" Not in CMIP6Plus: ${request_cv_item_error} The experiment, institution, source, license & description attributes contain an error for $imod"
+          if [ "${cv_experiment:0:6}" = "ERROR:" ]; then
+           echo -e "\e[1;31m Error:\e[0m"" ${cv_experiment:5:-1} for CMIP6Plus. The experiment, institution, source, license & description attributes contain an error for $imod"
           fi
 
           new_attrs_local+=" -a table_id,global,o,c,'${converted_table}'"
-          new_attrs_local+=" -a description,global,o,c,'${description}'"
-          new_attrs_local+=" -a experiment,global,o,c,'${experiment}'"
-          new_attrs_local+=" -a license,global,o,c,'${license}'"
-          new_attrs_local+=" -a institution,global,o,c,'${institution}'"
-          new_attrs_local+=" -a source,global,o,c,'${source}'"
-          new_attrs_local+=" -a title,global,o,c,'${title}'"
+          new_attrs_local+=" -a description,global,o,c,'${cv_description}'"
+          new_attrs_local+=" -a experiment,global,o,c,'${cv_experiment}'"
+          new_attrs_local+=" -a license,global,o,c,'${cv_license}'"
+          new_attrs_local+=" -a institution,global,o,c,'${cv_institution}'"
+          new_attrs_local+=" -a source,global,o,c,'${cv_source}'"
+          new_attrs_local+=" -a title,global,o,c,'${cv_title}'"
 
           # prepend history attribute
           new_attrs_local+=" -a history,global,p,c,'$(date -u +%FT%XZ) ; The cmorMDfixer CMIP6 => CMIP6Plus convertscript has been applied.;\n'"
