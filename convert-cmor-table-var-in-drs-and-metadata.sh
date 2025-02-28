@@ -82,11 +82,15 @@ if [ "$#" -eq 1 ]; then
 
   export -f determine_dir_level
 
+  # helper to trim leading and trailing spaces
+  function trim() {
+    sed -e 's/^[[:space:]]*//g' -e 's/[[:space:]]*$//g'
+  }
+
+  export -f trim
+
   function get_new_attrs() {
-    # helper to trim leading and trailing spaces
-    trim() {
-      sed -e 's/^[[:space:]]*//g' -e 's/[[:space:]]*$//g'
-    }
+
     # create sequence of ncatted commands from the config file
     export new_attrs=''
     # common updates
@@ -125,6 +129,7 @@ if [ "$#" -eq 1 ]; then
       table=$(echo ${i} | cut -d/ -f $((dir_level + 6)))
       var=$(echo ${i} | cut -d/ -f $((dir_level + 7)))
       experiment_id=$(echo ${i} | cut -d/ -f $((dir_level + 4)))
+      source_id=$(echo ${i} | cut -d/ -f $((dir_level + 3)))
 
       # Find the equivalent table and variable name and the convert status and catch the script output in an array:
       converted_result=($(./map-cmip6-to-cmip6plus.py ${table} ${var}))
@@ -168,23 +173,30 @@ if [ "$#" -eq 1 ]; then
           fi
 
           # add attrs to list
+          license=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_license) | cut -d = -f 2- | trim)
+          description=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_description) | cut -d = -f 2- | trim)
+          experiment=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_experiment) | cut -d = -f 2- | trim)
+
+          institution=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_institution_id) | cut -d = -f 2- | trim)
+          source=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_esm_source) | cut -d = -f 2- | trim)
+          # Stupid fixes for newline & single spaces in source text content (probably leaving this differences won't stop publishing):
+          for component in {'aerosol','atmos','atmosChem','land','landIce','ocean','ocnBgchem','seaIce'}; do 
+           source=${source/${component}/"\n${component}"}
+          done
+          source=$(echo "$source" | sed -e 's/ \\n/\\n/g')
+          source=$(echo "$source" | sed -e 's/:\\n/: \\n/g')
+          source=$(echo "$source" | sed -e 's/surroundings)\\n/surroundings) \\n/g')  # dirty adhoc fix for identical result
+
+          title="${source_id} output prepared for"            # The CMIP6Plus tables have an truncation error at the end of the title, see https://github.com/PCMDI/cmor/issues/776
+         #title="${source_id} output prepared for CMIP6Plus"  # Actual correct case
+
           new_attrs_local+=" -a table_id,global,o,c,'${converted_table}'"
-          case $experiment_id in
-          esm-piControl)
-            experiment="pre-industrial control simulation with preindustrial CO2 emissions defined (CO2 emission-driven)"
-            description="DECK: control (emission-driven)"
-            ;;
-          esm-hist)
-            experiment="all-forcing simulation of the recent past with atmospheric CO2 concentration calculated (CO2 emission-driven)"
-            description="CMIP6 historical (CO2 emission-driven)"
-            ;;
-          *)
-            echo " *** ERROR: settings for experiment $experiment_id not defined yet ***"
-            exit -1
-            ;;
-          esac
           new_attrs_local+=" -a description,global,o,c,'${description}'"
           new_attrs_local+=" -a experiment,global,o,c,'${experiment}'"
+          new_attrs_local+=" -a license,global,o,c,'${license}'"
+          new_attrs_local+=" -a institution,global,o,c,'${institution}'"
+          new_attrs_local+=" -a source,global,o,c,'${source}'"
+          new_attrs_local+=" -a title,global,o,c,'${title}'"
 
           # prepend history attribute
           new_attrs_local+=" -a history,global,p,c,'$(date -u +%FT%XZ) ; The cmorMDfixer CMIP6 => CMIP6Plus convertscript has been applied.;\n'"
