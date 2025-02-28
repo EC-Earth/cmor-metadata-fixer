@@ -122,10 +122,6 @@ if [ "$#" -eq 1 ]; then
     check_cmip6=$(echo ${i} | cut -d/ -f${dir_level})
     if [ "${check_cmip6}" = "CMIP6" ]; then
       # Obtain the table and var name from the file path and name:
-      table_level="$(($dir_level + 6))"
-      var_level="$(($dir_level + 7))"
-      table=$(echo ${i} | cut -d/ -f${table_level})
-      var=$(echo ${i} | cut -d/ -f${var_level})
       table=$(echo ${i} | cut -d/ -f $((dir_level + 6)))
       var=$(echo ${i} | cut -d/ -f $((dir_level + 7)))
       experiment_id=$(echo ${i} | cut -d/ -f $((dir_level + 4)))
