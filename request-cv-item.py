@@ -37,7 +37,8 @@ def main():
       #print('\n Running {:} with:\n  ./{:} {:} {:}\n'.format(os.path.basename(sys.argv[0]), os.path.basename(sys.argv[0]), sys.argv[1], sys.argv[2]))
 
        # Loading the CMIP6Plus CV file:
-       input_json_file = os.path.expanduser('~/cmorize/CMIP6Plus_CVs/CVs/CMIP6Plus_CV.json')
+      #input_json_file = os.path.expanduser('~/cmorize/CMIP6Plus_CVs/CVs/CMIP6Plus_CV.json')
+       input_json_file = os.path.expanduser('resources/CVs/CMIP6Plus_CV.json')
        if os.path.isfile(input_json_file) == False:
         print(error_message, ' The CV file ', input_json_file, ' does not exist.\n')
         sys.exit()
