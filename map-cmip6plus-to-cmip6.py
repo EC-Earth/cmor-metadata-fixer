@@ -28,7 +28,7 @@ def main():
 
     def load_cmip6_cmip6plus_map_table():
        # In case the path contains the ~ character this will be expanded to the home dir:
-       file_name_mapping_table = 'cmip6-cmip6plus-mapping-table.txt'
+       file_name_mapping_table = 'resources/map-table/cmip6-cmip6plus-mapping-table.txt'
        cmip6_cmip6plus_map_table_file_name = os.path.expanduser(file_name_mapping_table)
 
        # Checking if the cmip6-cmip6plus-mapping file exist, if not try to create it:
