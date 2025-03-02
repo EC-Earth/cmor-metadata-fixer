@@ -150,31 +150,38 @@ If so (this happens when during running the script the date changed because you 
 The ``convert-cmor-table-var-in-drs-and-metadata.sh`` script changes variable and table names to CMIP6Plus standards, updates attributes and adjusts the DRS.
 
 ```shell
-Usage: ./convert-cmor-table-var-in-drs-and-metadata.sh [-h] [-d] [-v] [-o] [-l log_file] [-c config_file] DIR
+Usage: ./convert-cmor-table-var-in-drs-and-metadata.sh [-h] [-d] [-v] [-p output_path] [-o] [-s switch_model] [-l log_file] [-c config_file] DIR
     -h : show help message
     -d : don't duplicate data (default: copy data)
     -v : switch on verbose (default: off)
-    -o : overwrite existing files (default: false)
+    -p : specify an output path (default: False)
+    -o : overwrite existing files (default: False)
+    -s : switch to another model (default: False), only affects unregistered cases
     -l : log_file (default: ./convert-cmor-table-var-in-drs-and-metadata.log)
     -c : configuration file (default: convert-ecearth.cfg)
     DIR : path to CMIP6 directory
 ```
 
-The configuration file holds a collection of all (global) attributes that should be updated when converting CMIP6 to CMIP6Plus. The example config file (convert-ecearth.cfg) includes the changes for EC-Earth3-ESM-1. Copy this file and edit settings for your model, then launch the conversion with ``-c your_config_file.cfg``
+With the configuration file it is possible to add a collection of new global attributes to the converted CMIP6Plus metadata. The example config file adds a comment attribute providing a reference to the OptimESM project and to the authors providing this dataset. Copy this file and edit settings for your model, then launch the conversion with ``-c your_config_file.cfg``
 
-Some attributes are updated automatically and don't need to be included in the config file:
+The attributes which are subject to changes when converting from CMIP6 to CMIP6Plus are updated automatically by a direct lookup in the CMIP6Plus CV file.
+and don't need to be included in the config file:
 - mip_era
 - parent_mip_era
-- table_id
+- further_info_url (will be removed for CMIP6Plus)
 - variable_id
-- experiment
+- table_id
 - description (new attribute for CMIP6Plus)
-- further_info_url (will be deleted)
+- experiment
+- license
+- institution
+- source
+- title
 - history
 
 Without the ``-d`` option the script copies data from an existing CMIP6 to a CMIP6Plus directory. With ``-d`` the files are moved instad, no backup. Use with caution!
 
-Datasets in the CMIP6 directory that cannot be mapped to CMIP6Plus datasets will be left untouched.
+Datasets in the CMIP6 directory that cannot be mapped to CMIP6Plus datasets will be left untouched. In case a CMIP6Plus unregistered model or unregistered experiment is encountered, datasets will be excluded. The ``-s`` switch model option can replace your (CMIP6) model name with a CMIP6Plus registered model name, but this is of course in general not likely a correct situation.
 
 
 
