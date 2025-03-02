@@ -17,8 +17,6 @@
 import sys                                                    # for sys.argv, sys.exit
 import os.path                                                # for checking file existence with: os.path.isfile
 import numpy as np                                            # for the use of e.g. np.multiply
-import math                                                   # for math.trunc
-import subprocess                                             # For issuing commands to the OS.
 
 error_message   = ' \033[91m' + 'Error:'   + '\033[0m'        # Red    error   message
 warning_message = ' \033[93m' + 'Warning:' + '\033[0m'        # Yellow warning message
