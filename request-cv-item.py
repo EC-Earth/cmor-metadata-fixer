@@ -101,7 +101,8 @@ def main():
         cv_license = cv_license[0].replace("produced by .*", "produced by " + cv_esm_institution_id)
         cv_license = cv_license[1:]
         cv_license = cv_license.replace("Commons .*", "Commons 4.0 (" + cv_esm_license['id'] + ")")
-        cv_license = cv_license.replace("creativecommons\\.org/.*)\\. *Consult", "creativecommons.org/licenses). Consult")
+       #cv_license = cv_license.replace("creativecommons\\.org/.*)\\. *Consult", "creativecommons.org/licenses). Consult")
+        cv_license = cv_license.replace("creativecommons\\.org/.*)\\. *Consult", "creativecommons.org/). Consult")
         cv_license = cv_license.replace(r"\.", ".")
         cv_license = cv_license.replace("*", "")
         content_requested_cv_item = cv_license.replace("$", "")
