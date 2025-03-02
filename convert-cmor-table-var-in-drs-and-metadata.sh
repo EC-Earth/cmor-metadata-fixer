@@ -60,6 +60,9 @@ if [ ${verbose} = True ]; then
    echo " data_dir = $data_dir"
 fi
 
+export nomatch_file=${log_file/.log/-nomatch.log}
+export unregistered_file=${log_file/.log/-unregistered.log}
+
 if [ "$#" -eq 1 ]; then
 
   function determine_dir_level() {
@@ -165,90 +168,103 @@ if [ "$#" -eq 1 ]; then
         # Check whether a model has a CMIP6Plus registration:
         cv_experiment=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_experiment) | cut -d = -f 2- | trim)
         error_in_cv_request=${cv_experiment:0:6}
+
+        # Continue conversion towards CMIP6 Plus in case no error is detected or in case no error is detected after switching source_id:
+        continue_conversion=True
         if [ "${error_in_cv_request}" = "ERROR:" ]; then
+         continue_conversion=False
 
          # Only allowed in case a model is not registered, to prevent other unintended cases.
          if [ "${switch_model}" != False ]; then
 
           # Check whether the model specified with the -s option has a CMIP6Plus registration:
-          cv_experiment=$(echo $(./request-cv-item.py ${switch_model} ${experiment_id} cv_experiment) | cut -d = -f 2- | trim)
-          error_in_cv_request=${cv_experiment:0:6}
+          cv_experiment_switch=$(echo $(./request-cv-item.py ${switch_model} ${experiment_id} cv_experiment) | cut -d = -f 2- | trim)
+          error_in_cv_request=${cv_experiment_switch:0:6}
           if [ "${error_in_cv_request}" = "ERROR:" ]; then
-           echo " The ${switch_model} specified with the -s option is not registred, therefore reject this switch."
+           echo -e "\e[1;31m Error:\e[0m"" The ${switch_model} specified with the -s option is not registred, therefore reject this switch."
           else
+           continue_conversion=True
            echo " Switch model name (due to -s option) from ${source_id} to ${switch_model}."
            # Replace all occurences:
            imod=${imod//${source_id}/${switch_model}}
            source_id=${switch_model}
-           if [ ${verbose} = True ]; then echo " Switch model name: ${imod}"; fi
-           # In case with -s also an unregistered source_id is specified, the attribute check below will catch that.
+           if [ ${verbose} = True ]; then
+            echo " Switch model name: ${imod}"
+           fi
           fi
         #else
-        # echo -e "\e[1;31m Error:\e[0m"" ${cv_experiment:5:-1} for CMIP6Plus."
+        # echo -e "\e[1;31m Error:\e[0m"" ${cv_experiment:7:-1} for CMIP6Plus."
          fi
         fi
 
+        if [ ${continue_conversion} = True ]; then
+         # check if file already exists
+         # if it exists force cp/mv only if -o has been set
+         if [ ! -f $imod ] || [ $overwrite = True ]; then
+           mkdir -p ${imod%/*}
+           if [ ${duplicate_data} = True ]; then
+             # Duplicate data to CMIP6plus DRS based directory for conversion to CMIP6plus:
+             rsync -a ${i} ${imod}
+           else
+             # Move data to CMIP6plus DRS based directory for conversion to CMIP6plus:
+             mv -f ${i} ${imod}
+           fi
+           if [ ${var} != ${converted_var} ]; then
+             ncrename -O -h -v ${var},${converted_var} ${imod}
+             new_attrs_local+=" -a variable_id,global,m,c,${converted_var}"
+           fi
 
-        # check if file already exists
-        # if it exists force cp/mv only if -o has been set
-        if [ ! -f $imod ] || [ $overwrite = True ]; then
-          mkdir -p ${imod%/*}
-          if [ ${duplicate_data} = True ]; then
-            # Duplicate data to CMIP6plus DRS based directory for conversion to CMIP6plus:
-            rsync -a ${i} ${imod}
-          else
-            # Move data to CMIP6plus DRS based directory for conversion to CMIP6plus:
-            mv -f ${i} ${imod}
-          fi
-          if [ ${var} != ${converted_var} ]; then
-            ncrename -O -h -v ${var},${converted_var} ${imod}
-            new_attrs_local+=" -a variable_id,global,m,c,${converted_var}"
-          fi
+           # add attrs to list
+           cv_license=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_license) | cut -d = -f 2- | trim)
+           cv_description=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_description) | cut -d = -f 2- | trim)
+           cv_experiment=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_experiment) | cut -d = -f 2- | trim)
 
-          # add attrs to list
-          cv_license=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_license) | cut -d = -f 2- | trim)
-          cv_description=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_description) | cut -d = -f 2- | trim)
-          cv_experiment=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_experiment) | cut -d = -f 2- | trim)
+           cv_institution=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_institution_id) | cut -d = -f 2- | trim)
+           cv_source=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_esm_source) | cut -d = -f 2- | trim)
+           # Stupid fixes for newline & single spaces in source text content (probably leaving this differences won't stop publishing):
+           for component in {'aerosol','atmos','atmosChem','land','landIce','ocean','ocnBgchem','seaIce'}; do 
+            cv_source=${cv_source/${component}/"\n${component}"}
+           done
+           cv_source=$(echo "${cv_source}" | sed -e 's/ \\n/\\n/g')
+           cv_source=$(echo "${cv_source}" | sed -e 's/:\\n/: \\n/g')
+           cv_source=$(echo "${cv_source}" | sed -e 's/surroundings)\\n/surroundings) \\n/g')  # dirty adhoc fix for identical result
 
-          cv_institution=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_institution_id) | cut -d = -f 2- | trim)
-          cv_source=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_esm_source) | cut -d = -f 2- | trim)
-          # Stupid fixes for newline & single spaces in source text content (probably leaving this differences won't stop publishing):
-          for component in {'aerosol','atmos','atmosChem','land','landIce','ocean','ocnBgchem','seaIce'}; do 
-           cv_source=${cv_source/${component}/"\n${component}"}
-          done
-          cv_source=$(echo "${cv_source}" | sed -e 's/ \\n/\\n/g')
-          cv_source=$(echo "${cv_source}" | sed -e 's/:\\n/: \\n/g')
-          cv_source=$(echo "${cv_source}" | sed -e 's/surroundings)\\n/surroundings) \\n/g')  # dirty adhoc fix for identical result
+           cv_title="${source_id} output prepared for"            # The CMIP6Plus tables have an truncation error at the end of the title, see https://github.com/PCMDI/cmor/issues/776
+          #cv_title="${source_id} output prepared for CMIP6Plus"  # Actual correct case
 
-          cv_title="${source_id} output prepared for"            # The CMIP6Plus tables have an truncation error at the end of the title, see https://github.com/PCMDI/cmor/issues/776
-         #cv_title="${source_id} output prepared for CMIP6Plus"  # Actual correct case
+           # Catch errors for cases in which a CMIP6 configuration or experiment is encountered which does not have an CMIP6Plus registration:
+           if [ "${cv_experiment:0:6}" = "ERROR:" ]; then
+            # This case should not longer occur.
+            echo -e "\e[1;31m Error:\e[0m"" ${cv_experiment:7:-1} for CMIP6Plus. The experiment, institution, source, license & description attributes contain an error for $imod"
+           fi
 
-          # Catch errors for cases in which a CMIP6 configuration or experiment is encountered which does not have an CMIP6Plus registration:
-          if [ "${cv_experiment:0:6}" = "ERROR:" ]; then
-           echo -e "\e[1;31m Error:\e[0m"" ${cv_experiment:5:-1} for CMIP6Plus. The experiment, institution, source, license & description attributes contain an error for $imod"
-          fi
+           new_attrs_local+=" -a table_id,global,o,c,'${converted_table}'"
+           new_attrs_local+=" -a description,global,o,c,'${cv_description}'"
+           new_attrs_local+=" -a experiment,global,o,c,'${cv_experiment}'"
+           new_attrs_local+=" -a license,global,o,c,'${cv_license}'"
+           new_attrs_local+=" -a institution,global,o,c,'${cv_institution}'"
+           new_attrs_local+=" -a source,global,o,c,'${cv_source}'"
+           new_attrs_local+=" -a title,global,o,c,'${cv_title}'"
 
-          new_attrs_local+=" -a table_id,global,o,c,'${converted_table}'"
-          new_attrs_local+=" -a description,global,o,c,'${cv_description}'"
-          new_attrs_local+=" -a experiment,global,o,c,'${cv_experiment}'"
-          new_attrs_local+=" -a license,global,o,c,'${cv_license}'"
-          new_attrs_local+=" -a institution,global,o,c,'${cv_institution}'"
-          new_attrs_local+=" -a source,global,o,c,'${cv_source}'"
-          new_attrs_local+=" -a title,global,o,c,'${cv_title}'"
+           # prepend history attribute
+           new_attrs_local+=" -a history,global,p,c,'$(date -u +%FT%XZ) ; The cmorMDfixer CMIP6 => CMIP6Plus convertscript has been applied.;\n'"
 
-          # prepend history attribute
-          new_attrs_local+=" -a history,global,p,c,'$(date -u +%FT%XZ) ; The cmorMDfixer CMIP6 => CMIP6Plus convertscript has been applied.;\n'"
+           # "eval" is needed here to avoid problems with whitespace in metadata
+           eval "ncatted ${new_attrs_local} -h -O ${imod}"
 
-          # "eval" is needed here to avoid problems with whitespace in metadata
-          eval "ncatted ${new_attrs_local} -h -O ${imod}"
+           echo "${imod}" >>${log_file}
+         else
+           echo "${imod} already exists and overwrite=$overwrite" | tee -a ${log_file}
+         fi
 
-          echo "${imod}" >>${log_file}
         else
-          echo "${imod} already exists and overwrite=$overwrite" | tee -a ${log_file}
+         echo -e "\e[1;31m Error:\e[0m"" ${cv_experiment:7:-1} for CMIP6Plus."
+         echo -e "${cv_experiment:7:-1} for CMIP6Plus for ${i}" >> ${unregistered_file}
         fi
 
       else
-        echo " No conversion for ${table} ${var} has been taken, the convert status is: ${status}"
+        echo -e "\e[1;31m Error:\e[0m"" No conversion for ${table} ${var} has been taken, the convert status is: ${status}"
+        echo " No CMIP6Plus table var match for ${i}" >> ${nomatch_file}
       fi
     else
       echo " Abort $0 because the root dir CMIP6 is not at the expected location in the path, instead we found: ${check_cmip6} at the expected location."
@@ -260,6 +276,8 @@ if [ "$#" -eq 1 ]; then
 
   # Clean log_file
   >${log_file}
+  >${nomatch_file}
+  >${unregistered_file}
 
   # First sanity check
   check=$(determine_dir_level $data_dir)
@@ -296,7 +314,19 @@ if [ "$#" -eq 1 ]; then
   fi
 
   # Guarantee same order:
-  sort ${log_file} >${log_file/.log/-sorted.log}
+  sort ${log_file}          >${log_file/.log/-sorted.log}
+  sort ${nomatch_file}      >${nomatch_file/.log/-sorted.log}
+  sort ${unregistered_file} >${unregistered_file/.log/-sorted.log}
+  if [ ! -s ${log_file} ]; then
+   rm -f ${log_file} ${log_file/.log/-sorted.log}
+  fi
+  if [ ! -s ${nomatch_file} ]; then
+   rm -f ${nomatch_file} ${nomatch_file/.log/-sorted.log}
+  fi
+  if [ ! -s ${unregistered_file} ]; then
+   rm -f ${unregistered_file} ${unregistered_file/.log/-sorted.log}
+  fi
+  rm -f ${log_file} ${nomatch_file} ${unregistered_file}
 
 else
   echo
