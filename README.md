@@ -179,7 +179,7 @@ and don't need to be included in the config file:
 - title
 - history
 
-Without the ``-d`` option the script copies data from an existing CMIP6 to a CMIP6Plus directory. With ``-d`` the files are moved instad, no backup. Use with caution!
+Without the ``-d`` option the script copies data from an existing CMIP6 to a CMIP6Plus directory. With ``-d`` the files are moved instead, no backup. Use with caution!
 
 Datasets in the CMIP6 directory that cannot be mapped to CMIP6Plus datasets will be left untouched. In case a CMIP6Plus unregistered model or unregistered experiment is encountered, datasets will be excluded. The ``-s`` switch model option can replace your (CMIP6) model name with a CMIP6Plus registered model name, but this is of course in general not likely a correct situation.
 
