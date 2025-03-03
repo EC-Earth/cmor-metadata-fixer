@@ -331,6 +331,6 @@ if [ "$#" -eq 1 ]; then
 else
   echo
   echo " Illegal number of arguments. Needs one argument, the data dir with your cmorised CMIP6 data:"
-  echo "  $0 cmorMDfixer-test-data/test-set-01/CMIP6/"
+  echo "  $0 cmorMDfixer-test-data/test-set-02/CMIP6/"
   echo
 fi
