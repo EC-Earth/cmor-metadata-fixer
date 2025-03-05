@@ -155,6 +155,7 @@ Usage: ./convert-cmor-table-var-in-drs-and-metadata.sh [-h] [-d] [-v] [-p output
     -d : don't duplicate data (default: copy data)
     -v : switch on verbose (default: off)
     -p : specify an output path (default: False)
+    -f : faster, taking several attributes from config instead directly from the CV file (default: False)
     -o : overwrite existing files (default: False)
     -s : switch to another model (default: False), only affects unregistered cases
     -l : log_file (default: ./convert-cmor-table-var-in-drs-and-metadata.log)
@@ -183,5 +184,10 @@ Without the ``-d`` option the script copies data from an existing CMIP6 to a CMI
 
 Datasets in the CMIP6 directory that cannot be mapped to CMIP6Plus datasets will be left untouched. In case a CMIP6Plus unregistered model or unregistered experiment is encountered, datasets will be excluded. The ``-s`` switch model option can replace your (CMIP6) model name with a CMIP6Plus registered model name, but this is of course in general not likely a correct situation.
 
-
+In case the ``-f`` fast mode option is used, which is about 10% faster, one needs to specify a config file which includes the correct CMIP6Plus attributes:
+- license
+- institution
+- source
+- title
+for your situation. For the ``EC-Earth3-ESM-1`` case the ``convert-ecearth-for-fast-mode.cfg`` file can be used.
 
