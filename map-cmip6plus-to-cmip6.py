@@ -17,8 +17,6 @@
 import sys                                                    # for sys.argv, sys.exit
 import os.path                                                # for checking file existence with: os.path.isfile
 import numpy as np                                            # for the use of e.g. np.multiply
-import math                                                   # for math.trunc
-import subprocess                                             # For issuing commands to the OS.
 
 error_message   = ' \033[91m' + 'Error:'   + '\033[0m'        # Red    error   message
 warning_message = ' \033[93m' + 'Warning:' + '\033[0m'        # Yellow warning message
@@ -30,7 +28,7 @@ def main():
 
     def load_cmip6_cmip6plus_map_table():
        # In case the path contains the ~ character this will be expanded to the home dir:
-       file_name_mapping_table = 'cmip6-cmip6plus-mapping-table.txt'
+       file_name_mapping_table = 'resources/map-table/cmip6-cmip6plus-mapping-table.txt'
        cmip6_cmip6plus_map_table_file_name = os.path.expanduser(file_name_mapping_table)
 
        # Checking if the cmip6-cmip6plus-mapping file exist, if not try to create it:

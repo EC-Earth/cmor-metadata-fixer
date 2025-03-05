@@ -37,7 +37,8 @@ def main():
       #print('\n Running {:} with:\n  ./{:} {:} {:}\n'.format(os.path.basename(sys.argv[0]), os.path.basename(sys.argv[0]), sys.argv[1], sys.argv[2]))
 
        # Loading the CMIP6Plus CV file:
-       input_json_file = os.path.expanduser('~/cmorize/CMIP6Plus_CVs/CVs/CMIP6Plus_CV.json')
+      #input_json_file = os.path.expanduser('~/cmorize/CMIP6Plus_CVs/CVs/CMIP6Plus_CV.json')
+       input_json_file = os.path.expanduser('resources/CVs/CMIP6Plus_CV.json')
        if os.path.isfile(input_json_file) == False:
         print(error_message, ' The CV file ', input_json_file, ' does not exist.\n')
         sys.exit()
@@ -50,14 +51,14 @@ def main():
        # Check whether arguments are known within the CV:
        esms = list(cv_content['CV']['source_id'].keys())
        if specified_source_id not in esms:
-          print('{} {} is not an valid ESM source_id.\n'.format(error_message, specified_source_id))
-         #print('\n ERROR: {} is not an valid ESM source_id.\n'.format(specified_source_id))
+          print('\n ERROR: {} is not a valid ESM source_id.\n'.format(specified_source_id))
+         #print('{} {} is not a valid ESM source_id.\n'.format(error_message, specified_source_id))
           sys.exit()
 
        experiments = list(cv_content['CV']['experiment_id'].keys())
        if specified_experiment not in experiments:
-          print('{} {} is not an valid experiment.\n'.format(error_message, specified_experiment))
-         #print('\n ERROR: {} is not an valid experiment.\n'.format(specified_experiment))
+          print('\n ERROR: {} is not a valid experiment.\n'.format(specified_experiment))
+         #print('{} {} is not a valid experiment.\n'.format(error_message, specified_experiment))
           sys.exit()
 
 
@@ -101,6 +102,7 @@ def main():
         cv_license = cv_license[0].replace("produced by .*", "produced by " + cv_esm_institution_id)
         cv_license = cv_license[1:]
         cv_license = cv_license.replace("Commons .*", "Commons 4.0 (" + cv_esm_license['id'] + ")")
+       #cv_license = cv_license.replace("creativecommons\\.org/.*)\\. *Consult", "creativecommons.org/licenses). Consult")
         cv_license = cv_license.replace("creativecommons\\.org/.*)\\. *Consult", "creativecommons.org/). Consult")
         cv_license = cv_license.replace(r"\.", ".")
         cv_license = cv_license.replace("*", "")
@@ -108,8 +110,8 @@ def main():
 
        else:
         content_requested_cv_item = 'nomatch'
-       #print('{} {} is not an valid requested_cv_item.\n'.format(error_message, requested_cv_item))
-       #print('\n ERROR: {} is not an valid requested_cv_item.\n'.format(requested_cv_item))
+       #print('\n ERROR: {} is not a valid requested_cv_item.\n'.format(requested_cv_item))
+       #print('{} {} is not a valid requested_cv_item.\n'.format(error_message, requested_cv_item))
 
        print('{}'.format(content_requested_cv_item))
 
