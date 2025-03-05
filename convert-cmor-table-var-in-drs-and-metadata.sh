@@ -12,6 +12,7 @@ usage() {
   echo "    -d : don't duplicate data (default: copy data)"
   echo "    -v : switch on verbose (default: off)"
   echo "    -p : specify an output path (default: ${output_path})"
+  echo "    -f : faster, taking several attributes from config instead directly from the CV file (default: ${fast_mode})"
   echo "    -o : overwrite existing files (default: ${overwrite})"
   echo "    -s : switch to another model (default: ${switch_model}), only affects unregistered cases"
   echo "    -l : log_file (default: ${log_file})"
@@ -26,17 +27,19 @@ export verbose=False
 export log_file=${0/.sh/.log}
 export config='convert-ecearth.cfg'
 export output_path=False
+export fast_mode=False
 export overwrite=False
 export switch_model=False
 
 option_list=""
-while getopts "hdvp:os:l:c:" opt; do
+while getopts "hdvp:fos:l:c:" opt; do
   option_list+=" -"$opt" "$OPTARG
   case $opt in
   h) usage ;;
   d) duplicate_data=False ;;
   v) verbose=True ;;
   p) output_path=$OPTARG ;;
+  f) fast_mode=True ;;
   o) overwrite=True ;;
   s) switch_model=$OPTARG ;;
   l) log_file=$OPTARG ;;
@@ -50,14 +53,15 @@ export data_dir=$1
 
 if [ ${verbose} = True ]; then
    echo
-   echo " duplicate_data = $duplicate_data"
+   echo " duplicate data = $duplicate_data"
    echo " verbose = $verbose"
-   echo " output_path = $output_path"
+   echo " output path = $output_path"
+   echo " fast mode = $fast_mode"
    echo " overwrite = $overwrite"
-   echo " switch_model = $switch_model"
-   echo " log_file = $log_file"
-   echo " config_file = $config"
-   echo " data_dir = $data_dir"
+   echo " switch model = $switch_model"
+   echo " log file name = $log_file"
+   echo " config file name = $config"
+   echo " input data dir = $data_dir"
 fi
 
 export nomatch_file=${log_file/.log/-nomatch.log}
@@ -241,10 +245,12 @@ if [ "$#" -eq 1 ]; then
            new_attrs_local+=" -a table_id,global,o,c,'${converted_table}'"
            new_attrs_local+=" -a description,global,o,c,'${cv_description}'"
            new_attrs_local+=" -a experiment,global,o,c,'${cv_experiment}'"
-           new_attrs_local+=" -a license,global,o,c,'${cv_license}'"
-           new_attrs_local+=" -a institution,global,o,c,'${cv_institution}'"
-           new_attrs_local+=" -a source,global,o,c,'${cv_source}'"
-           new_attrs_local+=" -a title,global,o,c,'${cv_title}'"
+           if [ ${fast_mode} = False ]; then
+            new_attrs_local+=" -a license,global,o,c,'${cv_license}'"
+            new_attrs_local+=" -a institution,global,o,c,'${cv_institution}'"
+            new_attrs_local+=" -a source,global,o,c,'${cv_source}'"
+            new_attrs_local+=" -a title,global,o,c,'${cv_title}'"
+           fi
 
            # prepend history attribute
            new_attrs_local+=" -a history,global,p,c,'$(date -u +%FT%XZ) ; The cmorMDfixer CMIP6 => CMIP6Plus convertscript has been applied.;\n'"
@@ -291,6 +297,16 @@ if [ "$#" -eq 1 ]; then
        echo " Found CMIP6 directory ${cmip6_path}"
        echo " Saving converted data in $(echo ${data_dir} | cut -d/ -f1-$((${check}-1)))/CMIP6Plus"
     fi
+  fi
+
+  if [ ${fast_mode} != False ]; then
+   for check_avail_atr in {'license="','institution="','source="','title="'}; do
+    presence_test=$(grep -e ${check_avail_atr} ${config})
+    if [[ ! ${presence_test} ]]; then
+     echo -e "\e[1;31m Error:\e[0m"" The ${check_avail_atr:0:-2} attribute is not defined in your config file ${config} wich should be the case with the fast mode -f option."
+     exit 1
+    fi
+   done
   fi
 
   # load list with new attributes
