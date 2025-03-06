@@ -219,22 +219,38 @@ if [ "$#" -eq 1 ]; then
            fi
 
            # add attrs to list
-           cv_license=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_license) | cut -d = -f 2- | trim)
-           cv_description=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_description) | cut -d = -f 2- | trim)
-           cv_experiment=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_experiment) | cut -d = -f 2- | trim)
+           if [ ${fast_mode} = False ]; then
+            cv_description=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_description)    | cut -d = -f 2- | trim)
+            cv_experiment=$( echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_experiment)     | cut -d = -f 2- | trim)
+            cv_license=$(    echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_license)        | cut -d = -f 2- | trim)
+            cv_institution=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_institution_id) | cut -d = -f 2- | trim)
+            cv_source=$(     echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_esm_source)     | cut -d = -f 2- | trim)
+            # Stupid fixes for newline & single spaces in source text content (probably leaving this differences won't stop publishing):
+            for component in {'aerosol','atmos','atmosChem','land','landIce','ocean','ocnBgchem','seaIce'}; do 
+             cv_source=${cv_source/${component}/"\n${component}"}
+            done
+            cv_source=$(echo "${cv_source}" | sed -e 's/ \\n/\\n/g')
+            cv_source=$(echo "${cv_source}" | sed -e 's/:\\n/: \\n/g')
+            cv_source=$(echo "${cv_source}" | sed -e 's/surroundings)\\n/surroundings) \\n/g')  # dirty adhoc fix for identical result
 
-           cv_institution=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_institution_id) | cut -d = -f 2- | trim)
-           cv_source=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_esm_source) | cut -d = -f 2- | trim)
-           # Stupid fixes for newline & single spaces in source text content (probably leaving this differences won't stop publishing):
-           for component in {'aerosol','atmos','atmosChem','land','landIce','ocean','ocnBgchem','seaIce'}; do 
-            cv_source=${cv_source/${component}/"\n${component}"}
-           done
-           cv_source=$(echo "${cv_source}" | sed -e 's/ \\n/\\n/g')
-           cv_source=$(echo "${cv_source}" | sed -e 's/:\\n/: \\n/g')
-           cv_source=$(echo "${cv_source}" | sed -e 's/surroundings)\\n/surroundings) \\n/g')  # dirty adhoc fix for identical result
-
-           cv_title="${source_id} output prepared for"            # The CMIP6Plus tables have an truncation error at the end of the title, see https://github.com/PCMDI/cmor/issues/776
-          #cv_title="${source_id} output prepared for CMIP6Plus"  # Actual correct case
+            cv_title="${source_id} output prepared for"            # The CMIP6Plus tables have an truncation error at the end of the title, see https://github.com/PCMDI/cmor/issues/776
+           #cv_title="${source_id} output prepared for CMIP6Plus"  # Actual correct case
+           else
+            case $experiment_id in
+            esm-piControl)
+              cv_experiment="pre-industrial control simulation with preindustrial CO2 emissions defined (CO2 emission-driven)"
+              cv_description="DECK: control (emission-driven)"
+              ;;
+            esm-hist)
+              cv_experiment="all-forcing simulation of the recent past with atmospheric CO2 concentration calculated (CO2 emission-driven)"
+              cv_description="CMIP6 historical (CO2 emission-driven)"
+              ;;
+            *)
+              echo -e "\e[1;31m Error:\e[0m"" Settings for experiment ${experiment_id} not defined yet for the fast mode."
+              exit -1
+              ;;
+            esac
+           fi
 
            # Catch errors for cases in which a CMIP6 configuration or experiment is encountered which does not have an CMIP6Plus registration:
            if [ "${cv_experiment:0:6}" = "ERROR:" ]; then
