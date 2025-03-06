@@ -49,6 +49,13 @@ while getopts "hdvp:fos:l:c:" opt; do
 done
 shift $((OPTIND - 1))
 
+if [ "${switch_model}" != False ] && [ ${fast_mode} != False ]; then
+ echo
+ echo -e "\e[1;31m Error:\e[0m"" Sorry option -s is not compatible with option -f"
+ echo
+ exit 1
+fi
+
 export data_dir=$1
 
 if [ ${verbose} = True ]; then
@@ -266,6 +273,12 @@ if [ "$#" -eq 1 ]; then
             new_attrs_local+=" -a institution,global,o,c,'${cv_institution}'"
             new_attrs_local+=" -a source,global,o,c,'${cv_source}'"
             new_attrs_local+=" -a title,global,o,c,'${cv_title}'"
+            if [ "${switch_model}" != False ]; then
+             new_attrs_local+=" -a source_id,global,o,c,'${source_id}'"
+             # Adjusting in this case the parent_source_id might be not always the preffered situation (maybe deactive again?):
+             cv_parent_source_id=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_parent_source_id) | cut -d = -f 2- | trim)
+             new_attrs_local+=" -a parent_source_id,global,o,c,'${cv_parent_source_id}'"
+            fi
            fi
 
            # prepend history attribute
