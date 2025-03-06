@@ -195,7 +195,7 @@ if [ "$#" -eq 1 ]; then
            echo -e "\e[1;31m Error:\e[0m"" The ${switch_model} specified with the -s option is not registred, therefore reject this switch."
           else
            continue_conversion=True
-           echo " Switch model name (due to -s option) from ${source_id} to ${switch_model}."
+          #echo " Switch model name (due to -s option) from ${source_id} to ${switch_model}."
            # Replace all occurences:
            imod=${imod//${source_id}/${switch_model}}
            source_id=${switch_model}
@@ -278,6 +278,8 @@ if [ "$#" -eq 1 ]; then
              # Adjusting in this case the parent_source_id might be not always the preffered situation (maybe deactive again?):
              cv_parent_source_id=$(echo $(./request-cv-item.py ${source_id} ${experiment_id} cv_parent_source_id) | cut -d = -f 2- | trim)
              new_attrs_local+=" -a parent_source_id,global,o,c,'${cv_parent_source_id}'"
+            #echo " Note that the parent_source_id has been set to ${cv_parent_source_id}."
+             echo " Switch model name (due to -s option) from ${source_id} to ${switch_model}. Note that the parent_source_id has been set to ${cv_parent_source_id}."
             fi
            fi
 
