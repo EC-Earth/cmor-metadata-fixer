@@ -25,7 +25,7 @@ usage() {
 export duplicate_data=True
 export verbose=False
 export log_file=${0/.sh/.log}
-export config='convert-ecearth.cfg'
+export config='config-files/convert-ecearth.cfg'
 export output_path=False
 export fast_mode=False
 export overwrite=False
@@ -284,7 +284,8 @@ if [ "$#" -eq 1 ]; then
            fi
 
            # prepend history attribute
-           new_attrs_local+=" -a history,global,p,c,'$(date -u +%FT%XZ) ; The cmorMDfixer CMIP6 => CMIP6Plus convertscript has been applied.;\n'"
+           new_attrs_local+=" -a history,global,p,c,'$(date -u +%FT%XZ) ; The convert-cmip6-to-cmip6plus.sh script has been applied.;\n'"
+          #new_attrs_local+=" -a history,global,p,c,'$(date -u +%FT%XZ) ; The cmorMDfixer CMIP6 => CMIP6Plus convertscript has been applied.;\n'"
 
            # "eval" is needed here to avoid problems with whitespace in metadata
            eval "ncatted ${new_attrs_local} -h -O ${imod}"
@@ -378,6 +379,6 @@ if [ "$#" -eq 1 ]; then
 else
   echo
   echo " Illegal number of arguments. Needs one argument, the data dir with your cmorised CMIP6 data:"
-  echo "  $0 cmorMDfixer-test-data/test-set-02/CMIP6/"
+  echo "  $0 ../cmorMDfixer-test-data/test-set-02/CMIP6/"
   echo
 fi
