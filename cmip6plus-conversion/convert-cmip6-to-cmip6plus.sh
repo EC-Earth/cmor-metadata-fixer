@@ -365,15 +365,23 @@ if [ "$#" -eq 1 ]; then
   sort ${log_file}          >${log_file/.log/-sorted.log}
   sort ${nomatch_file}      >${nomatch_file/.log/-sorted.log}
   sort ${unregistered_file} >${unregistered_file/.log/-sorted.log}
+  echo
   if [ ! -s ${log_file} ]; then
    rm -f ${log_file} ${log_file/.log/-sorted.log}
+  else
+   echo " Finished, the converted files are listed in the log file: ${log_file/.log/-sorted.log}"
   fi
   if [ ! -s ${nomatch_file} ]; then
    rm -f ${nomatch_file} ${nomatch_file/.log/-sorted.log}
+  else
+   echo " The no match encountered cases are listed in the log file: ${nomatch_file/.log/-sorted.log}"
   fi
   if [ ! -s ${unregistered_file} ]; then
    rm -f ${unregistered_file} ${unregistered_file/.log/-sorted.log}
+  else
+   echo " The unregistered encountered cases are listed in the log file: ${unregistered_file/.log/-sorted.log}"
   fi
+  echo
   rm -f ${log_file} ${nomatch_file} ${unregistered_file}
 
 else
