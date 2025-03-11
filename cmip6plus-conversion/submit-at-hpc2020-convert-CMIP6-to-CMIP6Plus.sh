@@ -31,7 +31,7 @@
 
    export HDF5_USE_FILE_LOCKING=FALSE
 
-   ./convert-cmor-table-var-in-drs-and-metadata.sh $CMIP6DIR
+   ./convert-cmip6-to-cmip6plus.sh $CMIP6DIR
 
  else
   echo

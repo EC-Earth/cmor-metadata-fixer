@@ -147,10 +147,10 @@ If so (this happens when during running the script the date changed because you 
 
 ## 4. Convert an existing CMIP6 directory tree to CMIP6Plus
 
-The ``convert-cmor-table-var-in-drs-and-metadata.sh`` script changes variable and table names to CMIP6Plus standards, updates attributes and adjusts the DRS.
+In the ``cmip6plus-conversion`` directory one finds the ``convert-cmip6-to-cmip6plus.sh`` script, which changes variable and table names to CMIP6Plus standards, updates attributes and adjusts their DRS.
 
 ```shell
-Usage: ./convert-cmor-table-var-in-drs-and-metadata.sh [-h] [-d] [-v] [-p output_path] [-o] [-s switch_model] [-l log_file] [-c config_file] DIR
+Usage: ./convert-cmip6-to-cmip6plus.sh [-h] [-d] [-v] [-p output_path] [-o] [-s switch_model] [-l log_file] [-c config_file] DIR
     -h : show help message
     -d : don't duplicate data (default: copy data)
     -v : switch on verbose (default: off)
@@ -159,7 +159,7 @@ Usage: ./convert-cmor-table-var-in-drs-and-metadata.sh [-h] [-d] [-v] [-p output
     -o : overwrite existing files (default: False)
     -s : switch to another model (default: False), only affects unregistered cases
     -l : log_file (default: ./convert-cmor-table-var-in-drs-and-metadata.log)
-    -c : configuration file (default: convert-ecearth.cfg)
+    -c : configuration file (default: config-files/convert-ecearth.cfg)
     DIR : path to CMIP6 directory
 ```
 
@@ -189,5 +189,5 @@ In case the ``-f`` fast mode option is used, which is about 10% faster, one need
 - institution
 - source
 - title
-for your situation. For the ``EC-Earth3-ESM-1`` case the ``convert-ecearth-for-fast-mode.cfg`` file can be used.
+for your situation. For the ``EC-Earth3-ESM-1`` case the ``config-files/config-EC-Earth3-ESM-1.cfg`` file can be used. This config file can be produced by running: ``./genereate-config-with-cv-items.py EC-Earth3-ESM-1`` or with any other registrated CMIP6Plus source_id.
 
