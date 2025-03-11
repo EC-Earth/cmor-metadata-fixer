@@ -189,5 +189,6 @@ In case the ``-f`` fast mode option is used, which is about 10% faster, one need
 - institution
 - source
 - title
-for your situation. For the ``EC-Earth3-ESM-1`` case the ``config-files/config-EC-Earth3-ESM-1.cfg`` file can be used. This config file can be produced by running: ``./genereate-config-with-cv-items.py EC-Earth3-ESM-1`` or with any other registrated CMIP6Plus source_id.
+
+for your situation. For the ``EC-Earth3-ESM-1`` case the ``config-files/config-EC-Earth3-ESM-1.cfg`` file can be used. This config file can be produced by running: ``./genereate-config-with-cv-items.py EC-Earth3-ESM-1``. Use another registrated CMIP6Plus ``source_id`` for another model.
 
