@@ -2041,3 +2041,4 @@ fx           sftlf                 APfx           sftlf
 fx           zfull                 APfx           zfull
 Amon         sfcWind               APmon          sfcWind
 LImon        sbl                   LImon          sbl                   Note change incell_methods
+Eday         prra                  APday          prra
